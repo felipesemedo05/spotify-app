@@ -9,7 +9,6 @@ def get_spotify_client(client_id, client_secret):
 
 # Função para mostrar as informações do usuário
 def show_user_info(spotify):
-    # Exemplo de obter as informações do usuário (pode ser expandido conforme necessário)
     user = spotify.current_user()
     st.write(f"Nome: {user['display_name']}")
     st.write(f"ID do usuário: {user['id']}")
