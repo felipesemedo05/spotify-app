@@ -272,8 +272,8 @@ if st.button("🔄 Reiniciar Token"):
     new_access_token = refresh_access_token(user)
     if new_access_token:
         st.session_state["access_token"] = new_access_token
-        st.experimental_rerun()  # Recarrega a página para aplicar o novo token
-
+        st.rerun()  # Atualiza a página
+        
 # Obtendo o token válido
 access_token = get_valid_token(user)
 
