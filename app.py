@@ -1,40 +1,34 @@
 import streamlit as st
-from spotipy import Spotify
-from spotipy.oauth2 import SpotifyClientCredentials
 
-# Função para obter as credenciais do Spotify
-def get_spotify_client(client_id, client_secret):
-    client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
-    return Spotify(client_credentials_manager=client_credentials_manager)
+# Dicionário com as informações dos usuários
+users_info = {
+    'client_id_duduguima': {
+        'client_id': 'duduguima_id',
+        'client_secret': 'duduguima_secret',
+        'email': 'duduguima@example.com',
+        'nome': 'Duduguima'
+    },
+    'client_id_smokyarts': {
+        'client_id': 'smokyarts_id',
+        'client_secret': 'smokyarts_secret',
+        'email': 'smokyarts@example.com',
+        'nome': 'Smoky Arts'
+    }
+}
 
-# Função para mostrar as informações do usuário
-def show_user_info(spotify):
-    user = spotify.current_user()
-    st.write(f"Nome: {user['display_name']}")
-    st.write(f"ID do usuário: {user['id']}")
-    st.write(f"Seguidores: {user['followers']['total']}")
+# Interface do usuário
+st.title('Selecione as Informações do Usuário')
 
-# Layout do Streamlit
-st.title('Spotify User Information')
+# Seleção do usuário
+selected_user = st.selectbox(
+    'Escolha o usuário para exibir as informações:',
+    ['client_id_duduguima', 'client_id_smokyarts']
+)
 
-# Usuário a ser escolhido (não mais usando selectbox)
-user_selection = st.text_input("Digite o nome do usuário (duduguima ou smokyarts)").lower()
+# Exibir as informações do usuário selecionado
+user_info = users_info[selected_user]
 
-if user_selection:  # Verifica se o nome do usuário foi informado
-    # Construir as chaves dinamicamente com base no nome do usuário
-    client_id_key = f"client_id_{user_selection}"
-    client_secret_key = f"client_secret_{user_selection}"
-
-    if client_id_key in st.secrets and client_secret_key in st.secrets:
-        # Obter as credenciais com base na seleção
-        client_id = st.secrets[client_id_key]
-        client_secret = st.secrets[client_secret_key]
-
-        # Autenticar com a API do Spotify
-        spotify = get_spotify_client(client_id, client_secret)
-
-        # Mostrar as informações do usuário
-        st.header(f"Informações do usuário {user_selection}")
-        show_user_info(spotify)
-    else:
-        st.error("Usuário não encontrado. Por favor, insira 'duduguima' ou 'smokyarts'.")
+st.subheader(f'Informações de {user_info["nome"]}')
+st.write(f'**ID do Cliente:** {user_info["client_id"]}')
+st.write(f'**Segredo do Cliente:** {user_info["client_secret"]}')
+st.write(f'**E-mail:** {user_info["email"]}')
