@@ -6,7 +6,7 @@ import pandas as pd
 # Configurações do seu app no Spotify
 CLIENT_ID = st.secrets['SPOTIFY_CLIENT_ID']
 CLIENT_SECRET = st.secrets['SPOTIFY_CLIENT_SECRET']
-REDIRECT_URI = st.secrets['SPOTIFY_REDIRECT_URI'] # Ajuste conforme seu domínio público
+REDIRECT_URI = st.secrets['SPOTIFY_REDIRECT_URI']  # Ajuste conforme seu domínio público
 
 SCOPE = "playlist-read-private user-read-private user-read-email"  # Adicionado escopo para ler playlists
 
@@ -16,6 +16,7 @@ TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_ME = "https://api.spotify.com/v1/me"
 SPOTIFY_API_PLAYLISTS = "https://api.spotify.com/v1/me/playlists"
 SPOTIFY_API_PLAYLIST_TRACKS = "https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+SPOTIFY_API_TOP_TRACKS = "https://api.spotify.com/v1/me/top/artists?time_range=short_term"  # Para pegar top músicas últimas 4 semanas
 
 # Criar a URL de autenticação
 def get_auth_url():
@@ -64,6 +65,12 @@ def get_all_playlist_tracks(access_token, playlist_id):
     
     return tracks
 
+# Função para buscar top artistas (últimas 4 semanas)
+def get_top_tracks(access_token):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.get(SPOTIFY_API_TOP_TRACKS, headers=headers)
+    return response.json()
+
 # Interface Streamlit
 st.title("Login com Spotify")
 
@@ -89,7 +96,7 @@ else:
     user_info = get_user_info(access_token)
     st.write(f"Usuário autenticado como {user_info['display_name']}")
 
-        # Buscar e exibir playlists do usuário
+    # Buscar e exibir playlists do usuário
     playlists_data = get_user_playlists(access_token)
     playlists = {p["name"]: p["id"] for p in playlists_data.get("items", [])}
     
@@ -113,11 +120,40 @@ else:
                 for artist in artists:
                     artist_count[artist] = artist_count.get(artist, 0) + 1
             
-            # Exibir todas as músicas
-            df_tracks = pd.DataFrame(track_list)
+            # Exibir as abas
+            tab = st.radio("Escolha uma análise:", ["Análise de Músicas por Artista", "Top 5 Álbuns", "Minhas Músicas Mais Ouvidas (últimas 4 semanas)"])
             
-            # Exibir análise
-            df_artists = pd.DataFrame(artist_count.items(), columns=["Artista", "Total de Músicas"])
-            df_artists = df_artists.sort_values(by="Total de Músicas", ascending=False)
-            st.write("Análise de músicas por artista na playlist:")
-            st.dataframe(df_artists)
+            if tab == "Análise de Músicas por Artista":
+                # Exibir análise de músicas por artista
+                df_tracks = pd.DataFrame(track_list)
+                df_artists = pd.DataFrame(artist_count.items(), columns=["Artista", "Total de Músicas"])
+                df_artists = df_artists.sort_values(by="Total de Músicas", ascending=False)
+                st.write("Análise de músicas por artista na playlist:")
+                st.dataframe(df_artists)
+
+            elif tab == "Top 5 Álbuns":
+                # Análise do top 5 álbuns da playlist
+                album_count = {}
+                for item in tracks_data:
+                    track = item.get("track", {})
+                    album_name = track.get("album", {}).get("name", "Desconhecido")
+                    album_count[album_name] = album_count.get(album_name, 0) + 1
+                
+                top_albums = sorted(album_count.items(), key=lambda x: x[1], reverse=True)[:5]
+                album_df = pd.DataFrame(top_albums, columns=["Álbum", "Quantidade de Músicas"])
+                st.write("Top 5 Álbuns na playlist:")
+                st.dataframe(album_df)
+
+            elif tab == "Minhas Músicas Mais Ouvidas (últimas 4 semanas)":
+                # Exibir top 5 músicas das últimas 4 semanas
+                top_tracks_data = get_top_tracks(access_token)
+                top_tracks = []
+                
+                for item in top_tracks_data.get("items", []):
+                    track_name = item.get("name", "Desconhecido")
+                    artist_names = [artist["name"] for artist in item.get("artists", [])]
+                    top_tracks.append({"Música": track_name, "Artistas": ", ".join(artist_names)})
+                
+                top_tracks_df = pd.DataFrame(top_tracks)
+                st.write("Minhas músicas mais ouvidas nas últimas 4 semanas:")
+                st.dataframe(top_tracks_df)
