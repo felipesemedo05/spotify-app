@@ -348,12 +348,12 @@ elif option == "🎧 Playlists":
                 artist_df = pd.DataFrame(artist_counts.items(), columns=['Artista', 'Músicas'])
                 artist_df = artist_df.sort_values(by='Músicas', ascending=False)
                 st.subheader("Artistas com mais músicas na playlist:")
-                st.dataframe(artist_df)
+                st.dataframe(artist_df.reset_index(drop=True))
 
                 # Álbuns com mais músicas
                 album_df = get_albums_with_most_tracks(tracks)
                 st.subheader("Álbuns com mais músicas na playlist:")
-                st.dataframe(album_df)
+                st.dataframe(album_df.reset_index(drop=True))
             else:
                 st.error("Erro ao carregar as faixas da playlist")
         except TypeError:
@@ -453,7 +453,7 @@ elif option == "🎵 Gêneros mais ouvidos":
         st.warning("❌ Nenhum gênero encontrado nos últimos 6 meses!")
     else:
         # Exibe a tabela dos gêneros mais ouvidos
-        st.dataframe(df_genres)
+        st.dataframe(df_genres.reset_index(drop=True))
 
         fig_history = px.bar(df_genres, x="Gênero", y="Frequência",
                         title="Frequência de gêneros",
