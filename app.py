@@ -18,7 +18,7 @@ def show_user_info(spotify):
 st.title('Spotify User Information')
 
 # Usuário a ser escolhido (não mais usando selectbox)
-user_selection = st.text_input("Digite o nome do usuário (duduguima ou smokyarts)")
+user_selection = st.selectbox("Selecione o usuário", ["duduguima", "smokyarts"])
 
 if user_selection:  # Verifica se o nome do usuário foi informado
     # Construir as chaves dinamicamente com base no nome do usuário
@@ -27,8 +27,8 @@ if user_selection:  # Verifica se o nome do usuário foi informado
 
     if client_id_key in st.secrets["spotify"] and client_secret_key in st.secrets["spotify"]:
         # Obter as credenciais com base na seleção
-        client_id = st.secrets["spotify"][client_id_key]
-        client_secret = st.secrets["spotify"][client_secret_key]
+        client_id = st.secrets[client_id_key]
+        client_secret = st.secrets[client_secret_key]
 
         # Autenticar com a API do Spotify
         spotify = get_spotify_client(client_id, client_secret)
