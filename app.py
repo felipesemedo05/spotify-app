@@ -17,16 +17,24 @@ def show_user_info(spotify):
 # Layout do Streamlit
 st.title('Spotify User Information')
 
-# Seleção do usuário
-user_selection = st.selectbox("Selecione o usuário", ["duduguima", "smokyarts"])
+# Usuário a ser escolhido (não mais usando selectbox)
+user_selection = st.text_input("Digite o nome do usuário (duduguima ou smokyarts)")
 
-# Obter as credenciais de acordo com a seleção usando st.secrets
-client_id = st.secrets["spotify"][user_selection]["client_id"]
-client_secret = st.secrets["spotify"][user_selection]["client_secret"]
+if user_selection:  # Verifica se o nome do usuário foi informado
+    # Construir as chaves dinamicamente com base no nome do usuário
+    client_id_key = f"client_id_{user_selection}"
+    client_secret_key = f"client_secret_{user_selection}"
 
-# Autenticar com a API do Spotify
-spotify = get_spotify_client(client_id, client_secret)
+    if client_id_key in st.secrets["spotify"] and client_secret_key in st.secrets["spotify"]:
+        # Obter as credenciais com base na seleção
+        client_id = st.secrets["spotify"][client_id_key]
+        client_secret = st.secrets["spotify"][client_secret_key]
 
-# Mostrar as informações do usuário
-st.header(f"Informações do usuário {user_selection}")
-show_user_info(spotify)
+        # Autenticar com a API do Spotify
+        spotify = get_spotify_client(client_id, client_secret)
+
+        # Mostrar as informações do usuário
+        st.header(f"Informações do usuário {user_selection}")
+        show_user_info(spotify)
+    else:
+        st.error("Usuário não encontrado. Por favor, insira 'duduguima' ou 'smokyarts'.")
