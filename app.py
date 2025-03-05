@@ -85,11 +85,35 @@ def get_playlist_tracks(access_token, playlist_id):
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return response.json()['items']
-    else:
-        return []
+    
+    all_tracks = []
+    # Paginação: Para pegar todas as faixas
+    while url:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            all_tracks.extend(data['items'])
+            url = data.get('next', None)  # Pega o link da próxima página, se houver
+        else:
+            st.error("Erro ao carregar as faixas da playlist")
+            break
+    
+    return all_tracks
+
+def get_tracks_dataframe(tracks):
+    track_data = []
+    for track in tracks:
+        track_info = track['track']
+        track_data.append({
+            'track_name': track_info['name'],
+            'artist_name': track_info['artists'][0]['name'],
+            'album_name': track_info['album']['name'],
+            'release_date': track_info['album']['release_date']
+        })
+    
+    # Criar DataFrame
+    df = pd.DataFrame(track_data)
+    return df
 
 # Streamlit Interface
 st.title("Spotify Authentication and Playlists")
@@ -130,14 +154,10 @@ elif option == "Playlists":
         tracks = get_playlist_tracks(access_token, selected_playlist['id'])
 
         if tracks:
-            # Contando os artistas com mais músicas
-            artists = [track['track']['artists'][0]['name'] for track in tracks if track['track']['artists']]
-            artist_counts = Counter(artists)
-            st.write("Artistas com mais músicas nesta playlist:")
-
-            # Mostrando os artistas mais frequentes
-            for artist, count in artist_counts.most_common():
-                st.write(f"{artist}: {count} música(s)")
+            # Criando DataFrame
+            df = get_tracks_dataframe(tracks)
+            st.write(f"Total de faixas na playlist: {len(df)}")
+            st.dataframe(df)  # Exibe o DataFrame com as faixas
         else:
             st.error("Erro ao carregar as faixas da playlist")
     else:
