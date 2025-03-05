@@ -186,7 +186,7 @@ elif option == "Playlists":
             # DataFrame das faixas
             df = get_tracks_dataframe(tracks)
             st.write(f"Total de faixas na playlist: {len(df)}")
-            st.dataframe(df)  # Exibe o DataFrame com as faixas
+            #st.dataframe(df)  # Exibe o DataFrame com as faixas
 
             # Artistas com mais músicas
             artist_counts = get_artists_with_most_tracks(tracks)
