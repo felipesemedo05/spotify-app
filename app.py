@@ -5,6 +5,7 @@ import json
 from collections import Counter
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
+import pandas as pd
 
 # Funções auxiliares para acessar e renovar tokens (como já discutido)
 TOKEN_FILE = "tokens.json"
