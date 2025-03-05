@@ -11,12 +11,12 @@ TOKEN_URL = "https://accounts.spotify.com/api/token"
 
 CLIENTS = {
     "duduguima": {
-        "client_id": "CLIENT_ID_DUDUGUIMA",
-        "client_secret": "CLIENT_SECRET_DUDUGUIMA"
+        "client_id": st.secrets['client_id_duduguima'],
+        "client_secret": st.secrets['client_secret_duduguima']
     },
     "smokyarts": {
-        "client_id": "CLIENT_ID_SMOKYARTS",
-        "client_secret": "CLIENT_SECRET_SMOKYARTS"
+        "client_id": st.secrets['client_id_smokyarts'],
+        "client_secret": st.secrets['client_secret_smokyarts']
     }
 }
 
