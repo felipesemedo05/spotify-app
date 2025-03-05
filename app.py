@@ -18,7 +18,7 @@ auth_manager = SpotifyOAuth(client_id=CLIENT_ID,
                              client_secret=CLIENT_SECRET,
                              redirect_uri=REDIRECT_URI,
                              scope=SCOPE,
-                             show_dialog=True)
+                             show_dialog=True)  # Isso força o usuário a sempre fazer login
 
 # Função para autenticação e pegar o token
 def authenticate():
