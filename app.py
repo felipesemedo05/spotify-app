@@ -52,10 +52,21 @@ def get_user_playlists(access_token):
     return response.json()
 
 # Função para buscar músicas de uma playlist
-def get_playlist_tracks(access_token, playlist_id):
-    headers = {"Authorization": f"Bearer {access_token}"}
-    response = requests.get(SPOTIFY_API_PLAYLIST_TRACKS.format(playlist_id=playlist_id), headers=headers)
-    return response.json()
+def get_playlist_tracks(playlist_id):
+    tracks_data = []
+    results = sp.playlist_tracks(playlist_id)
+    
+    while results:
+        for item in results["items"]:
+            track = item["track"]
+            artist_name = track["artists"][0]["name"]
+            album_name = track["album"]["name"]
+            album_artist = track["album"]["artists"][0]["name"]
+            tracks_data.append([track["name"], artist_name, album_name, album_artist])
+        
+        results = sp.next(results) if results["next"] else None
+    
+    return pd.DataFrame(tracks_data, columns=["Música", "Artista", "Álbum", "Artista do Álbum"])
 
 # Interface Streamlit
 st.title("Login com Spotify")
