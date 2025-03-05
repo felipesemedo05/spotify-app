@@ -1,56 +1,85 @@
 import streamlit as st
-import spotipy
+import time
+import requests
+import json
+from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
-import webbrowser
 
-# Configurações das credenciais para cada usuário
-USERS = {
+# Funções auxiliares para acessar e renovar tokens (como já discutido)
+TOKEN_FILE = "tokens.json"
+TOKEN_URL = "https://accounts.spotify.com/api/token"
+
+CLIENTS = {
     "duduguima": {
-        "CLIENT_ID": st.secrets['client_id_duduguima'],
-        "CLIENT_SECRET": st.secrets['client_secret_duduguima'],
-        "REDIRECT_URI": "https://spotify-app-qtnrmxu4qmnesgsgoyvvxg.streamlit.app/callback",
+        "client_id": "CLIENT_ID_DUDUGUIMA",
+        "client_secret": "CLIENT_SECRET_DUDUGUIMA"
     },
     "smokyarts": {
-        "CLIENT_ID": st.secrets['client_id_smokyarts'],
-        "CLIENT_SECRET": st.secrets['client_secret_smokyarts'],
-        "REDIRECT_URI": "https://spotify-app-qtnrmxu4qmnesgsgoyvvxg.streamlit.app/callback",
-    },
+        "client_id": "CLIENT_ID_SMOKYARTS",
+        "client_secret": "CLIENT_SECRET_SMOKYARTS"
+    }
 }
 
-# Definir escopos necessários
-SCOPE = "user-library-read"
+def load_tokens():
+    with open(TOKEN_FILE, "r") as file:
+        return json.load(file)
 
-# Criar interface do Streamlit
-st.title("Spotify API - Seleção de Usuário")
+def save_tokens(tokens):
+    with open(TOKEN_FILE, "w") as file:
+        json.dump(tokens, file, indent=4)
 
-# Seleção do usuário
-selected_user = st.selectbox("Selecione um usuário:", list(USERS.keys()))
-
-if st.button("Iniciar Sessão"):
-    user_data = USERS[selected_user]
-    auth_manager = SpotifyOAuth(
-        client_id=user_data["CLIENT_ID"],
-        client_secret=user_data["CLIENT_SECRET"],
-        redirect_uri=user_data["REDIRECT_URI"],
-        scope=SCOPE,
-    )
-    webbrowser.open(auth_manager.get_authorize_url())
+def refresh_access_token(user):
+    tokens = load_tokens()
+    refresh_token = tokens[user]["refresh_token"]
     
-    token_info = auth_manager.get_access_token(as_dict=False)
-    sp = spotipy.Spotify(auth=token_info)
-    
-    # Obter informações do usuário
-    user_profile = sp.current_user()
-    st.write("### Perfil do Usuário:")
-    st.write(f"**Nome:** {user_profile['display_name']}")
-    st.write(f"**ID do Usuário:** {user_profile['id']}")
-    if user_profile['images']:
-        st.image(user_profile['images'][0]['url'], width=150)
-    
-    # Exibir músicas salvas do usuário
-    st.write("### Músicas Salvas:")
-    saved_tracks = sp.current_user_saved_tracks(limit=5)
-    for idx, item in enumerate(saved_tracks['items']):
-        track = item['track']
-        st.write(f"{idx + 1}. {track['name']} - {track['artists'][0]['name']}")
+    client_id = CLIENTS[user]["client_id"]
+    client_secret = CLIENTS[user]["client_secret"]
 
+    response = requests.post(TOKEN_URL, data={
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "client_id": client_id,
+        "client_secret": client_secret
+    })
+
+    if response.status_code == 200:
+        new_token_data = response.json()
+        tokens[user]["access_token"] = new_token_data["access_token"]
+        tokens[user]["expires_at"] = time.time() + new_token_data.get("expires_in", 3600)
+        save_tokens(tokens)
+        return new_token_data["access_token"]
+    else:
+        return None
+
+def get_valid_token(user):
+    tokens = load_tokens()
+    if time.time() > tokens[user]["expires_at"]:
+        return refresh_access_token(user)
+    return tokens[user]["access_token"]
+
+def get_user_info(access_token):
+    url = "https://api.spotify.com/v1/me"
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return None
+
+# Streamlit Interface
+st.title("Spotify Authentication")
+st.write("Escolha um usuário para ver suas informações:")
+
+user = st.selectbox("Usuário", ["duduguima", "smokyarts"])
+
+access_token = get_valid_token(user)
+user_info = get_user_info(access_token)
+
+if user_info:
+    st.write(f"Nome: {user_info['display_name']}")
+    st.write(f"Email: {user_info['email']}")
+    st.image(user_info['images'][0]['url'] if user_info['images'] else None)
+else:
+    st.error("Erro ao acessar as informações do usuário")
