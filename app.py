@@ -30,25 +30,28 @@ def authenticate():
 
 # Função para verificar se o usuário já está autenticado
 def check_authentication():
+    # Checar se já tem token na sessão
     if 'token_info' not in st.session_state:
         st.session_state.token_info = None
         st.session_state.sp = None
-
-    # Se o token não estiver presente, tenta autenticar
+    
+    # Se o token não está presente, verificar o código de autenticação
     if st.session_state.token_info is None:
         auth_code = st.query_params.get('code', [None])[0]
 
         if auth_code:
-            # Se houver código de autenticação, tenta autenticar e salvar o token
+            # Se o código de autenticação está presente, tentar autenticar e salvar o token
             token_info = auth_manager.get_access_token(auth_code)
             if token_info:
                 st.session_state.token_info = token_info
                 st.session_state.sp = spotipy.Spotify(auth=token_info['access_token'])
                 st.success("✅ Autenticado com sucesso!")
+                return st.session_state.sp
             else:
                 st.warning("❌ Não foi possível autenticar.")
+                return None
         else:
-            # Se não houver token, redireciona para a autenticação
+            # Se não tem o código, redireciona para a página de autenticação
             auth_url = auth_manager.get_authorize_url()
             st.markdown(f"[Clique aqui para autenticar com o Spotify]({auth_url})")
             return None
@@ -103,6 +106,7 @@ st.title("🎵 Analisador de Spotify - Playlists & Músicas Mais Ouvidas")
 # Passo 1: Verificar autenticação
 sp = check_authentication()
 
+# Só continuar com a execução se o Spotify estiver autenticado corretamente
 if sp:
     user_info = sp.current_user()
     st.success(f"Logado como: {user_info['display_name']}")
