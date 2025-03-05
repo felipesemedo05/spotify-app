@@ -5,6 +5,7 @@ import json
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import plotly.express as px
 from collections import Counter
 
 # Funções auxiliares para acessar e renovar tokens (como já discutido)
@@ -224,6 +225,23 @@ elif option == "Playlists":
 
 elif option == "Top Músicas":
     top_tracks_df = get_top_tracks(access_token)
-    st.dataframe(top_tracks_df)  # Exibe o DataFrame no Streamlit
+    #st.dataframe(top_tracks_df)  # Exibe o DataFrame no Streamlit
+
+    if top_tracks_df.empty:
+        st.warning("❌ Nenhuma música encontrada no seu histórico!")
+    else:
+        st.dataframe(top_tracks_df)
+
+        fig_top_tracks = px.bar(top_tracks_df, x="Música", y="Popularidade",
+                                title="Top 10 Músicas Mais Ouvidas (4 Semanas)", text_auto=True, color="Popularidade",)
+
+        # Adiciona a rotação de 45 graus no eixo X
+        fig_top_tracks.update_layout(
+            xaxis=dict(
+                tickangle=45  # Rotação de 45 graus nos rótulos do eixo X
+            )
+        )
+
+        st.plotly_chart(fig_top_tracks)
 
 
