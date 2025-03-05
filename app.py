@@ -17,7 +17,7 @@ TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_ME = "https://api.spotify.com/v1/me"
 SPOTIFY_API_PLAYLISTS = "https://api.spotify.com/v1/me/playlists"
 SPOTIFY_API_PLAYLIST_TRACKS = "https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
-SPOTIFY_API_TOP_TRACKS = "https://api.spotify.com/v1/me/top/artists?time_range=short_term"  # Para pegar top músicas últimas 4 semanas
+SPOTIFY_API_TOP_TRACKS = "https://api.spotify.com/v1/me/top/artists"  # Para pegar top músicas últimas 4 semanas
 
 # Criar a URL de autenticação
 def get_auth_url():
