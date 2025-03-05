@@ -1,19 +1,18 @@
 import streamlit as st
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
-import os
 
 # Acessando as credenciais dos clientes a partir de st.secrets
 CLIENTS = {
     'duduguima': {
-        'client_id': st.secrets["spotify"]["client_id_duduguima"],
-        'client_secret': st.secrets["spotify"]["client_secret_duduguima"],
-        'redirect_uri': st.secrets["spotify"]["redirect_uri"]
+        'client_id': st.secrets["client_id_duduguima"],
+        'client_secret': st.secrets["client_secret_duduguima"],
+        'redirect_uri': st.secrets["redirect_uri"]
     },
     'smokyarts': {
-        'client_id': st.secrets["spotify"]["client_id_smokyarts"],
-        'client_secret': st.secrets["spotify"]["client_secret_smokyarts"],
-        'redirect_uri': st.secrets["spotify"]["redirect_uri"]
+        'client_id': st.secrets["client_id_smokyarts"],
+        'client_secret': st.secrets["client_secret_smokyarts"],
+        'redirect_uri': st.secrets["redirect_uri"]
     }
 }
 
@@ -47,23 +46,11 @@ if 'token_info' not in st.session_state:
                              scope=SCOPE).get_authorize_url()
     st.write(f"Para acessar as informações de {selected_user}, faça login no Spotify:")
     st.markdown(f"[Clique aqui para login]({auth_url})")
-
-    # Captura o código de autenticação após o redirecionamento
-    if 'code' in st.experimental_get_query_params():
-        # Captura o código de autorização a partir da URL
-        code = st.experimental_get_query_params()['code'][0]
-        # Usamos o código para obter o token de acesso
-        sp = authenticate_spotify(client_info['client_id'], client_info['client_secret'], client_info['redirect_uri'])
-        token_info = sp.auth_manager.get_access_token(code)
-        st.session_state.token_info = token_info
-        st.experimental_rerun()
-
 else:
     # Se o token existe, autenticamos automaticamente
     sp = authenticate_spotify(client_info['client_id'],
                                client_info['client_secret'],
                                client_info['redirect_uri'])
-    sp.auth_manager.cache_token_info(st.session_state.token_info)
     
     try:
         # Tentamos pegar as informações do usuário
