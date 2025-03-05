@@ -5,7 +5,7 @@ import streamlit as st
 # Configurações do Spotify API
 CLIENT_ID = "c3c44b8fc55743548e06cbcf9091a144"
 CLIENT_SECRET = "686d326c88e74648b70b60fcd55bb86c"
-REDIRECT_URI = "https://spotify-app-yvawikszvndqbtuo3gjh6x.streamlit.app/callback"
+REDIRECT_URI = "https://spotify-app-yvawikszvndqbtuo3gjh6x.streamlit.app/"
 SCOPE = "playlist-read-private user-top-read"
 
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=CLIENT_ID,
