@@ -202,7 +202,7 @@ user = st.selectbox("Usuário", ["duduguima", "smokyarts"])
 # Obtendo o token válido
 access_token = get_valid_token(user)
 
-if option == "Informações do Usuário":
+if option == "📋 Informações do Usuário":
     st.header("Informações do Usuário")
     user_info = get_user_info(access_token)
 
@@ -213,7 +213,7 @@ if option == "Informações do Usuário":
     else:
         st.error("Erro ao acessar as informações do usuário")
 
-elif option == "Playlists":
+elif option == "🎧 Playlists":
     st.header("Suas Playlists")
     playlists = get_user_playlists(access_token)
 
@@ -249,7 +249,7 @@ elif option == "Playlists":
     else:
         st.error("Você não tem playlists.")
 
-elif option == "Top Músicas":
+elif option == "🔥 Músicas mais ouvidas das últimas 4 semanas":
     top_tracks_df = get_top_tracks(access_token)
     #st.dataframe(top_tracks_df)  # Exibe o DataFrame no Streamlit
 
