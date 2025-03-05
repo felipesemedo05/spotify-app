@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import urllib.parse
 import pandas as pd
+import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import plotly.express as px
 
@@ -20,7 +21,13 @@ SPOTIFY_API_PLAYLISTS = "https://api.spotify.com/v1/me/playlists"
 SPOTIFY_API_PLAYLIST_TRACKS = "https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
 SPOTIFY_API_TOP_TRACKS = "https://api.spotify.com/v1/me/top/artists"  # Para pegar top músicas últimas 4 semanas
 
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=CLIENT_ID, client_secret=CLIENT_SECRET, redirect_uri=REDIRECT_URI, scope=SCOPE))
+auth_manager = SpotifyOAuth(client_id=CLIENT_ID,
+                            client_secret=CLIENT_SECRET,
+                            redirect_uri=REDIRECT_URI,
+                            scope=SCOPE,
+                            show_dialog=True)  # Isso força o usuário a sempre fazer login
+
+sp = spotipy.Spotify(auth_manager=auth_manager)
 
 # Criar a URL de autenticação
 def get_auth_url():
