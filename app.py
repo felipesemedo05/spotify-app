@@ -203,8 +203,6 @@ def get_top_tracks_6_months(access_token):
     # Limita a 400 músicas, caso a contagem ultrapasse
     return pd.DataFrame(tracks_data[:100], columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Popularidade"])
 
-
-# Função para pegar o histórico das últimas músicas ouvidas
 # Função para obter o histórico de reprodução do usuário
 def get_recently_played(access_token):
     url = "https://api.spotify.com/v1/me/player/recently-played?limit=50"
@@ -213,7 +211,7 @@ def get_recently_played(access_token):
     response = requests.get(url, headers=headers)
 
     if response.status_code == 401:  # Token expirado
-        st.error("❌ Token expirado! Tente reiniciar o token manualmente.")
+        st.error("❌ Token expirado! Tente reiniciar o token.")
         return pd.DataFrame()
     
     data = response.json()
@@ -226,7 +224,7 @@ def get_recently_played(access_token):
     tracks_data = []
     for item in data["items"]:
         track = item["track"]
-        played_at = item["played_at"]  # Quando a música foi tocada
+        played_at = item["played_at"]
         track_name = track["name"]
         artist_name = track["artists"][0]["name"]
         album_name = track["album"]["name"]
@@ -293,8 +291,15 @@ option = st.sidebar.radio("Escolha uma opção", ("📋 Informações do Usuári
                                                 "🎵 Gêneros mais ouvidos"))
 
 # Usuário selecionado
-user = st.selectbox("Usuário", ["duduguima", 
-                                "smokyarts"])
+user = st.selectbox("👤 Escolha o usuário", ["duduguima", 
+                                             "smokyarts"])
+
+# Atualiza o token quando o usuário muda
+if "current_user" not in st.session_state or st.session_state["current_user"] != user:
+    st.session_state["current_user"] = user
+    st.session_state["access_token"] = refresh_access_token(user)
+    st.cache_data.clear()  # Limpa o cache para garantir atualização
+    st.rerun()
 
 # Botão para reiniciar o token
 if st.button("🔄 Reiniciar Token"):
