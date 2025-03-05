@@ -3,11 +3,7 @@ from spotipy.oauth2 import SpotifyOAuth
 import streamlit as st
 import os
 import urllib.parse
-
-
-import streamlit as st
-import requests
-import urllib.parse
+import pandas as pd
 
 # Configurações do seu app no Spotify
 CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
@@ -73,176 +69,141 @@ else:
     user_info = get_user_info(access_token)
     st.write("Usuário autenticado:", user_info)
 
+if access_token:
+    st.set_page_config(page_title="🎵 Analisador de Spotify", layout="wide")
+    # Autenticação
+    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=CLIENT_ID,
+                                                client_secret=CLIENT_SECRET,
+                                                redirect_uri=REDIRECT_URI,
+                                                scope=SCOPE))
 
-# CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
-# CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
-# REDIRECT_URI = st.secrets["SPOTIFY_REDIRECT_URI"]
+    # Função para buscar playlists do usuário
+    def get_user_playlists():
+        playlists = sp.current_user_playlists()
+        return {p["name"]: p["id"] for p in playlists["items"]}
 
-# sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
-#     client_id=CLIENT_ID,
-#     client_secret=CLIENT_SECRET,
-#     redirect_uri=REDIRECT_URI,
-#     scope="user-top-read playlist-read-private"
-# ))
-
-# st.write(sp.me()) # Deve retornar os detalhes do usuário autenticado
-
-# import streamlit as st
-# import pandas as pd
-# import spotipy
-# from spotipy.oauth2 import SpotifyOAuth
-# import plotly.express as px
-
-# st.set_page_config(page_title="🎵 Analisador de Spotify oi", layout="wide")
-
-# # Configurações do Spotify API
-# CLIENT_ID = "c3c44b8fc55743548e06cbcf9091a144"
-# CLIENT_SECRET = "686d326c88e74648b70b60fcd55bb86c"
-# REDIRECT_URI = "http://localhost:8888/callback"
-# SCOPE = "playlist-read-private user-top-read"
-
-# # # Criar autenticação do Spotify
-# # auth_manager = SpotifyOAuth(client_id=CLIENT_ID,
-# #                             client_secret=CLIENT_SECRET,
-# #                             redirect_uri=REDIRECT_URI,
-# #                             scope=SCOPE,
-# #                             show_dialog=True)  # Isso força o usuário a sempre fazer login
-
-# # sp = spotipy.Spotify(auth_manager=auth_manager)
-
-# # Autenticação
-# sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=CLIENT_ID,
-#                                                client_secret=CLIENT_SECRET,
-#                                                redirect_uri=REDIRECT_URI,
-#                                                scope=SCOPE))
-
-# # Função para buscar playlists do usuário
-# def get_user_playlists():
-#     playlists = sp.current_user_playlists()
-#     return {p["name"]: p["id"] for p in playlists["items"]}
-
-# # Função para buscar músicas e álbuns de uma playlist
-# def get_playlist_tracks(playlist_id):
-#     tracks_data = []
-#     results = sp.playlist_tracks(playlist_id)
-    
-#     while results:
-#         for item in results["items"]:
-#             track = item["track"]
-#             artist_name = track["artists"][0]["name"]
-#             album_name = track["album"]["name"]
-#             album_artist = track["album"]["artists"][0]["name"]
-#             tracks_data.append([track["name"], artist_name, album_name, album_artist])
+    # Função para buscar músicas e álbuns de uma playlist
+    def get_playlist_tracks(playlist_id):
+        tracks_data = []
+        results = sp.playlist_tracks(playlist_id)
         
-#         results = sp.next(results) if results["next"] else None
-    
-#     return pd.DataFrame(tracks_data, columns=["Música", "Artista", "Álbum", "Artista do Álbum"])
-
-# # Função para buscar as músicas mais ouvidas das últimas 4 semanas (agora com até 400 músicas)
-# def get_top_tracks():
-#     tracks_data = []
-#     results = sp.current_user_top_tracks(limit=50, time_range="short_term")  # Últimas 4 semanas
-    
-#     while results:
-#         # Adiciona as músicas retornadas pela API
-#         tracks_data.extend([[track["name"], track["artists"][0]["name"], track["album"]["name"], 
-#                              track["album"]["artists"][0]["name"], track["popularity"]]
-#                             for track in results["items"]])
+        while results:
+            for item in results["items"]:
+                track = item["track"]
+                artist_name = track["artists"][0]["name"]
+                album_name = track["album"]["name"]
+                album_artist = track["album"]["artists"][0]["name"]
+                tracks_data.append([track["name"], artist_name, album_name, album_artist])
+            
+            results = sp.next(results) if results["next"] else None
         
-#         # Verifica se há mais músicas para pegar
-#         if len(tracks_data) >= 500:
-#             break
+        return pd.DataFrame(tracks_data, columns=["Música", "Artista", "Álbum", "Artista do Álbum"])
+
+    # Função para buscar as músicas mais ouvidas das últimas 4 semanas (agora com até 400 músicas)
+    def get_top_tracks():
+        tracks_data = []
+        results = sp.current_user_top_tracks(limit=50, time_range="short_term")  # Últimas 4 semanas
         
-#         # Se houver mais músicas, continua a busca com a próxima página
-#         results = sp.next(results) if results["next"] else None
-    
-#     # Limita a 500 músicas, caso a contagem ultrapasse
-#     return pd.DataFrame(tracks_data[:500], columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Popularidade"])
-
-# # Função para buscar as músicas mais ouvidas nos últimos 6 meses (agora com até 400 músicas)
-# def get_top_tracks_6_months():
-#     tracks_data = []
-#     results = sp.current_user_top_tracks(limit=50, time_range="medium_term")  # Últimos 6 meses
-    
-#     while results:
-#         # Adiciona as músicas retornadas pela API
-#         tracks_data.extend([[track["name"], track["artists"][0]["name"], track["album"]["name"], 
-#                              track["album"]["artists"][0]["name"], track["popularity"]]
-#                             for track in results["items"]])
+        while results:
+            # Adiciona as músicas retornadas pela API
+            tracks_data.extend([[track["name"], track["artists"][0]["name"], track["album"]["name"], 
+                                track["album"]["artists"][0]["name"], track["popularity"]]
+                                for track in results["items"]])
+            
+            # Verifica se há mais músicas para pegar
+            if len(tracks_data) >= 500:
+                break
+            
+            # Se houver mais músicas, continua a busca com a próxima página
+            results = sp.next(results) if results["next"] else None
         
-#         # Verifica se há mais músicas para pegar
-#         if len(tracks_data) >= 400:
-#             break
+        # Limita a 500 músicas, caso a contagem ultrapasse
+        return pd.DataFrame(tracks_data[:500], columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Popularidade"])
+
+    # Função para buscar as músicas mais ouvidas nos últimos 6 meses (agora com até 400 músicas)
+    def get_top_tracks_6_months():
+        tracks_data = []
+        results = sp.current_user_top_tracks(limit=50, time_range="medium_term")  # Últimos 6 meses
         
-#         # Se houver mais músicas, continua a busca com a próxima página
-#         results = sp.next(results) if results["next"] else None
-    
-#     # Limita a 400 músicas, caso a contagem ultrapasse
-#     return pd.DataFrame(tracks_data[:400], columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Popularidade"])
-
-# # Função para buscar as músicas mais ouvidas no longo prazo
-# def get_top_tracks_long_term():
-#     tracks_data = []
-#     results = sp.current_user_top_tracks(limit=50, time_range="long_term")  # Histórico completo (todas as músicas)
-    
-#     while results:
-#         # Adiciona as músicas retornadas pela API
-#         tracks_data.extend([[track["name"], track["artists"][0]["name"], track["album"]["name"], 
-#                              track["album"]["artists"][0]["name"], track["popularity"]]
-#                             for track in results["items"]])
+        while results:
+            # Adiciona as músicas retornadas pela API
+            tracks_data.extend([[track["name"], track["artists"][0]["name"], track["album"]["name"], 
+                                track["album"]["artists"][0]["name"], track["popularity"]]
+                                for track in results["items"]])
+            
+            # Verifica se há mais músicas para pegar
+            if len(tracks_data) >= 400:
+                break
+            
+            # Se houver mais músicas, continua a busca com a próxima página
+            results = sp.next(results) if results["next"] else None
         
-#         # Verifica se há mais músicas para pegar
-#         if len(tracks_data) >= 400:
-#             break
+        # Limita a 400 músicas, caso a contagem ultrapasse
+        return pd.DataFrame(tracks_data[:400], columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Popularidade"])
+
+    # Função para buscar as músicas mais ouvidas no longo prazo
+    def get_top_tracks_long_term():
+        tracks_data = []
+        results = sp.current_user_top_tracks(limit=50, time_range="long_term")  # Histórico completo (todas as músicas)
         
-#         # Se houver mais músicas, continua a busca com a próxima página
-#         results = sp.next(results) if results["next"] else None
-    
-#     # Limita a 400 músicas, caso a contagem ultrapasse
-#     return pd.DataFrame(tracks_data[:400], columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Popularidade"])
-
-# # Configuração do Streamlit
-# st.title("🎵 Analisador de Spotify - Playlists & Músicas Mais Ouvidas")
-
-# st.write("Clique no botão abaixo para autenticar outro usuário:")
-
-# if st.button("🔑 Fazer login no Spotify"):
-#     auth_url = auth_manager.get_authorize_url()
-#     st.markdown(f"[Clique aqui para autenticar]( {auth_url} )", unsafe_allow_html=True)
-
-# # Verificar se o token foi gerado e usuário está autenticado
-# if sp.current_user():
-#     user_info = sp.current_user()
-#     st.success(f"✅ Logado como: {user_info['display_name']}")
-
-#     # Criar uma caixa de seleção de playlist fora das abas para que fique visível em todas as abas
-#     playlists = get_user_playlists()
-#     playlist_name = st.selectbox("Selecione uma playlist:", list(playlists.keys()))
-
-#     # Criar abas para visualizações
-#     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["🎤 Top 5 Artistas", 
-#                                             "📀 Top 5 Álbuns", 
-#                                             "🔥 Mais Ouvidas (Últimas 4 Semanas)", 
-#                                             "🔄 Mais Ouvidas (Últimos 6 Meses)", 
-#                                             "📊 Cruzamento Playlist X Mais Ouvidas (Últimas 4 Semanas)", 
-#                                             "🎨 Músicas mais ouvidas da conta"])
-
-#     # 🔹 Aba 1 - Análise de uma Playlist (Top Artistas)
-#     with tab1:
-#         st.subheader("🎤 Top 5 Artistas com Mais Músicas na Playlist")
+        while results:
+            # Adiciona as músicas retornadas pela API
+            tracks_data.extend([[track["name"], track["artists"][0]["name"], track["album"]["name"], 
+                                track["album"]["artists"][0]["name"], track["popularity"]]
+                                for track in results["items"]])
+            
+            # Verifica se há mais músicas para pegar
+            if len(tracks_data) >= 400:
+                break
+            
+            # Se houver mais músicas, continua a busca com a próxima página
+            results = sp.next(results) if results["next"] else None
         
-#         if playlist_name:
-#             playlist_id = playlists[playlist_name]
-#             df_tracks = get_playlist_tracks(playlist_id)
+        # Limita a 400 músicas, caso a contagem ultrapasse
+        return pd.DataFrame(tracks_data[:400], columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Popularidade"])
 
-#             if df_tracks.empty:
-#                 st.warning("❌ Essa playlist não contém músicas!")
-#             else:
-#                 artist_counts = df_tracks["Artista"].value_counts().reset_index()
-#                 artist_counts.columns = ["Artista", "Quantidade"]
-#                 top_5_artists = artist_counts.head(5)
+    # Configuração do Streamlit
+    st.title("🎵 Analisador de Spotify - Playlists & Músicas Mais Ouvidas")
 
-#                 st.dataframe(top_5_artists)
+    st.write("Clique no botão abaixo para autenticar outro usuário:")
+
+    if st.button("🔑 Fazer login no Spotify"):
+        auth_url = auth_manager.get_authorize_url()
+        st.markdown(f"[Clique aqui para autenticar]( {auth_url} )", unsafe_allow_html=True)
+
+    # Verificar se o token foi gerado e usuário está autenticado
+    if sp.current_user():
+        user_info = sp.current_user()
+        st.success(f"✅ Logado como: {user_info['display_name']}")
+
+        # Criar uma caixa de seleção de playlist fora das abas para que fique visível em todas as abas
+        playlists = get_user_playlists()
+        playlist_name = st.selectbox("Selecione uma playlist:", list(playlists.keys()))
+
+        # Criar abas para visualizações
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["🎤 Top 5 Artistas", 
+                                                "📀 Top 5 Álbuns", 
+                                                "🔥 Mais Ouvidas (Últimas 4 Semanas)", 
+                                                "🔄 Mais Ouvidas (Últimos 6 Meses)", 
+                                                "📊 Cruzamento Playlist X Mais Ouvidas (Últimas 4 Semanas)", 
+                                                "🎨 Músicas mais ouvidas da conta"])
+
+        # 🔹 Aba 1 - Análise de uma Playlist (Top Artistas)
+        with tab1:
+            st.subheader("🎤 Top 5 Artistas com Mais Músicas na Playlist")
+            
+            if playlist_name:
+                playlist_id = playlists[playlist_name]
+                df_tracks = get_playlist_tracks(playlist_id)
+
+                if df_tracks.empty:
+                    st.warning("❌ Essa playlist não contém músicas!")
+                else:
+                    artist_counts = df_tracks["Artista"].value_counts().reset_index()
+                    artist_counts.columns = ["Artista", "Quantidade"]
+                    top_5_artists = artist_counts.head(5)
+
+                    st.dataframe(top_5_artists)
 
 #     # 🔹 Aba 2 - Análise de uma Playlist (Top Álbuns com Artista)
 #     with tab2:
