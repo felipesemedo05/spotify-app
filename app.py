@@ -30,3 +30,10 @@ auth_manager = SpotifyOAuth(client_id=CLIENT_ID,
                             scope=SCOPE)
 
 sp = spotipy.Spotify(auth_manager=auth_manager)
+
+def get_user_playlists():
+    playlists = sp.current_user_playlists()
+    return {p["name"]: p["id"] for p in playlists["items"]}
+
+user_info = sp.current_user()
+st.write(user_info)
