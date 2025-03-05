@@ -51,22 +51,18 @@ def get_user_playlists(access_token):
     response = requests.get(SPOTIFY_API_PLAYLISTS, headers=headers)
     return response.json()
 
-# Função para buscar músicas de uma playlist
-def get_playlist_tracks(playlist_id):
-    tracks_data = []
-    results = sp.playlist_tracks(playlist_id)
+# Função para buscar todas as músicas de uma playlist (página por página)
+def get_all_playlist_tracks(access_token, playlist_id):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    tracks = []
+    next_url = SPOTIFY_API_PLAYLIST_TRACKS.format(playlist_id=playlist_id)
     
-    while results:
-        for item in results["items"]:
-            track = item["track"]
-            artist_name = track["artists"][0]["name"]
-            album_name = track["album"]["name"]
-            album_artist = track["album"]["artists"][0]["name"]
-            tracks_data.append([track["name"], artist_name, album_name, album_artist])
-        
-        results = sp.next(results) if results["next"] else None
+    while next_url:
+        response = requests.get(next_url, headers=headers).json()
+        tracks.extend(response.get("items", []))
+        next_url = response.get("next")  # Pega a próxima página
     
-    return pd.DataFrame(tracks_data, columns=["Música", "Artista", "Álbum", "Artista do Álbum"])
+    return tracks
 
 # Interface Streamlit
 st.title("Login com Spotify")
@@ -102,18 +98,28 @@ else:
         
         if selected_playlist:
             playlist_id = playlists[selected_playlist]
-            tracks_data = get_playlist_tracks(access_token, playlist_id)
+            tracks_data = get_all_playlist_tracks(access_token, playlist_id)
             
             # Contagem de músicas por artista
             artist_count = {}
-            for item in tracks_data.get("items", []):
+            track_list = []
+            
+            for item in tracks_data:
                 track = item.get("track", {})
-                for artist in track.get("artists", []):
-                    artist_name = artist["name"]
-                    artist_count[artist_name] = artist_count.get(artist_name, 0) + 1
+                track_name = track.get("name", "Desconhecido")
+                artists = [artist["name"] for artist in track.get("artists", [])]
+                track_list.append({"Música": track_name, "Artistas": ", ".join(artists)})
+                
+                for artist in artists:
+                    artist_count[artist] = artist_count.get(artist, 0) + 1
+            
+            # Exibir todas as músicas
+            df_tracks = pd.DataFrame(track_list)
+            st.write("Músicas na Playlist:")
+            st.dataframe(df_tracks)
             
             # Exibir análise
-            df = pd.DataFrame(artist_count.items(), columns=["Artista", "Total de Músicas"])
-            df = df.sort_values(by="Total de Músicas", ascending=False)
+            df_artists = pd.DataFrame(artist_count.items(), columns=["Artista", "Total de Músicas"])
+            df_artists = df_artists.sort_values(by="Total de Músicas", ascending=False)
             st.write("Análise de músicas por artista na playlist:")
-            st.dataframe(df)
+            st.dataframe(df_artists)
