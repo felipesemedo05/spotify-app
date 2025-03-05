@@ -1,17 +1,18 @@
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import streamlit as st
+import os
 
-# Configurações do Spotify API
-CLIENT_ID = "c3c44b8fc55743548e06cbcf9091a144"
-CLIENT_SECRET = "686d326c88e74648b70b60fcd55bb86c"
-REDIRECT_URI = "https://spotify-app-yvawikszvndqbtuo3gjh6x.streamlit.app"
-SCOPE = "playlist-read-private user-top-read"
+CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
+CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
+REDIRECT_URI = st.secrets["SPOTIFY_REDIRECT_URI"]
 
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=CLIENT_ID,
-                                               client_secret=CLIENT_SECRET,
-                                               redirect_uri=REDIRECT_URI,
-                                               scope=SCOPE))
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET,
+    redirect_uri=REDIRECT_URI,
+    scope="user-top-read playlist-read-private"
+))
 
 st.write(sp.me()) # Deve retornar os detalhes do usuário autenticado
 
