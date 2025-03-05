@@ -104,6 +104,24 @@ def get_playlist_tracks(access_token, playlist_id):
     
     return all_tracks
 
+def get_albums_with_most_tracks(tracks):
+    album_counts = {}
+    for track in tracks:
+        album_name = track['track']['album']['name']
+        artist_name = track['track']['album']['artists'][0]['name']
+        
+        if album_name in album_counts:
+            album_counts[album_name]['count'] += 1
+        else:
+            album_counts[album_name] = {'count': 1, 'artist': artist_name}
+    
+    # Convertendo para um DataFrame
+    album_data = [{"Álbum": album, "Artista do Álbum": data['artist'], "Músicas": data['count']} 
+                  for album, data in album_counts.items()]
+    
+    df_albums = pd.DataFrame(album_data)
+    return df_albums.sort_values(by="Músicas", ascending=False)
+
 def get_tracks_dataframe(tracks):
     track_data = []
     for track in tracks:
@@ -213,17 +231,19 @@ elif option == "Playlists":
             # DataFrame das faixas
             df = get_tracks_dataframe(tracks)
             st.write(f"Total de faixas na playlist: {len(df)}")
-            #st.dataframe(df)  # Exibe o DataFrame com as faixas
+            st.dataframe(df)  # Exibe o DataFrame com as faixas
 
             # Artistas com mais músicas
             artist_counts = get_artists_with_most_tracks(tracks)
             artist_df = pd.DataFrame(artist_counts.items(), columns=['Artista', 'Músicas'])
             artist_df = artist_df.sort_values(by='Músicas', ascending=False)
-            album_counts = df.groupby(["Álbum", "Artista do Álbum"]).size().reset_index(name="Quantidade")
             st.write("Artistas com mais músicas na playlist:")
             st.dataframe(artist_df)
-            st.write("Top Álbuns da Playlist")
-            st.dataframe(album_counts)
+
+            # Álbuns com mais músicas
+            album_df = get_albums_with_most_tracks(tracks)
+            st.write("Álbuns com mais músicas na playlist:")
+            st.dataframe(album_df)
         else:
             st.error("Erro ao carregar as faixas da playlist")
     else:
