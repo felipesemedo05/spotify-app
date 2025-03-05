@@ -213,16 +213,24 @@ def get_recently_played_tracks(access_token, limit=50):
     results = requests.get(url, headers=headers).json()
 
     tracks_data = []
-    for item in results["items"]:
-        track = item["track"]
-        tracks_data.append([
-            track["name"], 
-            track["artists"][0]["name"], 
-            track["album"]["name"], 
-            track["album"]["artists"][0]["name"], 
-            track["played_at"]
-        ])
-
+    
+    # Verificar se a chave 'items' está presente nos resultados
+    if 'items' in results:
+        for item in results["items"]:
+            track = item["track"]
+            # Verifica se 'played_at' está presente
+            played_at = item.get("played_at", "Data não disponível")
+            
+            tracks_data.append([
+                track["name"], 
+                track["artists"][0]["name"], 
+                track["album"]["name"], 
+                track["album"]["artists"][0]["name"], 
+                played_at
+            ])
+    else:
+        st.error("Erro ao acessar o histórico de músicas. Tente novamente mais tarde.")
+    
     return pd.DataFrame(tracks_data, columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Data de Reprodução"])
 
 def get_artists_with_most_tracks(tracks):
@@ -393,5 +401,4 @@ elif option == "📱 Histórico de músicas ouvidas":
 
         # Exibe o gráfico
         st.plotly_chart(fig_recent_tracks)
-
 
