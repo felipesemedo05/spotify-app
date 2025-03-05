@@ -115,15 +115,38 @@ def get_tracks_dataframe(tracks):
     return df
 
 def get_top_tracks(access_token):
-    url = "https://api.spotify.com/v1/me/top/tracks?time_range=short_term&limit=100"
+    tracks_data = []
+    url = "https://api.spotify.com/v1/me/top/tracks?time_range=short_term&limit=50"  # Últimas 4 semanas
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return response.json()['items']
-    else:
-        return []
+    
+    results = requests.get(url, headers=headers).json()
+    
+    while results:
+        # Adiciona as músicas retornadas pela API
+        tracks_data.extend([[
+            track["name"], 
+            track["artists"][0]["name"], 
+            track["album"]["name"], 
+            track["album"]["artists"][0]["name"], 
+            track["popularity"]
+        ] for track in results["items"]])
+
+        # Verifica se há mais músicas para pegar
+        if len(tracks_data) >= 500:
+            break
+
+        # Se houver mais músicas, continua a busca com a próxima página
+        url = results.get("next")
+        if url:
+            results = requests.get(url, headers=headers).json()
+        else:
+            break
+
+    # Limita a 500 músicas, caso a contagem ultrapasse
+    return pd.DataFrame(tracks_data[:500], columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Popularidade"])
+
 
 def get_artists_with_most_tracks(tracks):
     artists = [track['track']['artists'][0]['name'] for track in tracks if track['track']['artists']]
@@ -200,25 +223,7 @@ elif option == "Playlists":
         st.error("Você não tem playlists.")
 
 elif option == "Top Músicas":
-    st.header("Top 100 Músicas Mais Ouvidas")
+    top_tracks_df = get_top_tracks(access_token)
+    st.dataframe(top_tracks_df)  # Exibe o DataFrame no Streamlit
 
-    # Obtendo as músicas mais ouvidas
-    top_tracks = get_top_tracks(access_token)
-
-    if top_tracks:
-        # Exibe as músicas mais ouvidas em DataFrame
-        track_data = [{
-            'track_name': track['name'],
-            'artist_name': track['artists'][0]['name'],
-            'popularity': track['popularity']
-        } for track in top_tracks]
-
-        df_top_tracks = pd.DataFrame(track_data)
-        st.write(f"Total de músicas: {len(df_top_tracks)}")
-        st.dataframe(df_top_tracks)
-
-        # Gráfico de popularidade
-        plot_popularity(top_tracks)
-    else:
-        st.error("Erro ao carregar as músicas mais ouvidas.")
 
