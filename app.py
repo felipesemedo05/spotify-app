@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import urllib.parse
 import pandas as pd
+import plotly.express as px
 
 # Configurações do seu app no Spotify
 CLIENT_ID = st.secrets['SPOTIFY_CLIENT_ID']
@@ -145,15 +146,22 @@ else:
                 st.dataframe(album_df)
 
             elif tab == "Minhas Músicas Mais Ouvidas (últimas 4 semanas)":
+
+                df_top_tracks = get_top_tracks(access_token)
                 # Exibir top 5 músicas das últimas 4 semanas
-                top_tracks_data = get_top_tracks(access_token)
-                top_tracks = []
-                
-                for item in top_tracks_data.get("items", []):
-                    track_name = item.get("name", "Desconhecido")
-                    artist_names = [artist["name"] for artist in item.get("artists", [])]
-                    top_tracks.append({"Música": track_name, "Artistas": ", ".join(artist_names)})
-                
-                top_tracks_df = pd.DataFrame(top_tracks)
-                st.write("Minhas músicas mais ouvidas nas últimas 4 semanas:")
-                st.dataframe(top_tracks_df)
+                if df_top_tracks.empty:
+                    st.warning("❌ Nenhuma música encontrada no seu histórico!")
+                else:
+                    st.dataframe(df_top_tracks)
+
+                    fig_top_tracks = px.bar(df_top_tracks, x="Música", y="Popularidade",
+                                            title="Top 10 Músicas Mais Ouvidas (4 Semanas)", text_auto=True, color="Popularidade",)
+
+                    # Adiciona a rotação de 45 graus no eixo X
+                    fig_top_tracks.update_layout(
+                        xaxis=dict(
+                            tickangle=45  # Rotação de 45 graus nos rótulos do eixo X
+                        )
+                    )
+
+                    st.plotly_chart(fig_top_tracks)
