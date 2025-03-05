@@ -2,10 +2,10 @@ import streamlit as st
 import time
 import requests
 import json
-from collections import Counter
-from spotipy import Spotify
-from spotipy.oauth2 import SpotifyOAuth
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from collections import Counter
 
 # Funções auxiliares para acessar e renovar tokens (como já discutido)
 TOKEN_FILE = "tokens.json"
@@ -88,13 +88,12 @@ def get_playlist_tracks(access_token, playlist_id):
     }
     
     all_tracks = []
-    # Paginação: Para pegar todas as faixas
     while url:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             data = response.json()
             all_tracks.extend(data['items'])
-            url = data.get('next', None)  # Pega o link da próxima página, se houver
+            url = data.get('next', None)
         else:
             st.error("Erro ao carregar as faixas da playlist")
             break
@@ -112,16 +111,45 @@ def get_tracks_dataframe(tracks):
             'release_date': track_info['album']['release_date']
         })
     
-    # Criar DataFrame
     df = pd.DataFrame(track_data)
     return df
+
+def get_top_tracks(access_token):
+    url = "https://api.spotify.com/v1/me/top/tracks?time_range=short_term&limit=100"
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json()['items']
+    else:
+        return []
+
+def get_artists_with_most_tracks(tracks):
+    artists = [track['track']['artists'][0]['name'] for track in tracks if track['track']['artists']]
+    artist_counts = Counter(artists)
+    return artist_counts
+
+def plot_popularity(tracks):
+    popularities = [track['track']['popularity'] for track in tracks]
+    track_names = [track['track']['name'] for track in tracks]
+    
+    # Criar gráfico
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x=track_names, y=popularities, palette='viridis')
+    plt.xticks(rotation=90)
+    plt.xlabel('Música')
+    plt.ylabel('Popularidade')
+    plt.title('Popularidade das 100 músicas mais ouvidas')
+    plt.tight_layout()
+    st.pyplot(plt)
 
 # Streamlit Interface
 st.title("Spotify Authentication and Playlists")
 
 # Menu de navegação
 st.sidebar.title("Navegação")
-option = st.sidebar.radio("Escolha uma opção", ("Informações do Usuário", "Playlists"))
+option = st.sidebar.radio("Escolha uma opção", ("Informações do Usuário", "Playlists", "Top Músicas"))
 
 # Usuário selecionado
 user = st.selectbox("Usuário", ["duduguima", "smokyarts"])
@@ -155,11 +183,42 @@ elif option == "Playlists":
         tracks = get_playlist_tracks(access_token, selected_playlist['id'])
 
         if tracks:
-            # Criando DataFrame
+            # DataFrame das faixas
             df = get_tracks_dataframe(tracks)
             st.write(f"Total de faixas na playlist: {len(df)}")
             st.dataframe(df)  # Exibe o DataFrame com as faixas
+
+            # Artistas com mais músicas
+            artist_counts = get_artists_with_most_tracks(tracks)
+            artist_df = pd.DataFrame(artist_counts.items(), columns=['Artista', 'Músicas'])
+            artist_df = artist_df.sort_values(by='Músicas', ascending=False)
+            st.write("Artistas com mais músicas na playlist:")
+            st.dataframe(artist_df)
         else:
             st.error("Erro ao carregar as faixas da playlist")
     else:
         st.error("Você não tem playlists.")
+
+elif option == "Top Músicas":
+    st.header("Top 100 Músicas Mais Ouvidas")
+
+    # Obtendo as músicas mais ouvidas
+    top_tracks = get_top_tracks(access_token)
+
+    if top_tracks:
+        # Exibe as músicas mais ouvidas em DataFrame
+        track_data = [{
+            'track_name': track['name'],
+            'artist_name': track['artists'][0]['name'],
+            'popularity': track['popularity']
+        } for track in top_tracks]
+
+        df_top_tracks = pd.DataFrame(track_data)
+        st.write(f"Total de músicas: {len(df_top_tracks)}")
+        st.dataframe(df_top_tracks)
+
+        # Gráfico de popularidade
+        plot_popularity(top_tracks)
+    else:
+        st.error("Erro ao carregar as músicas mais ouvidas.")
+
