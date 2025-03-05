@@ -224,28 +224,33 @@ elif option == "🎧 Playlists":
         selected_playlist = next(playlist for playlist in playlists if playlist['name'] == selected_playlist_name)
         st.write(f"Você selecionou a playlist: {selected_playlist_name}")
 
-        # Obtendo as faixas da playlist
-        tracks = get_playlist_tracks(access_token, selected_playlist['id'])
+        try:
+            # Tentamos obter as faixas da playlist
+            tracks = get_playlist_tracks(access_token, selected_playlist['id'])
 
-        if tracks:
-            # DataFrame das faixas
-            df = get_tracks_dataframe(tracks)
-            st.write(f"Total de faixas na playlist: {len(df)}")
-            st.dataframe(df)  # Exibe o DataFrame com as faixas
+            if tracks:
+                # DataFrame das faixas
+                df = get_tracks_dataframe(tracks)
+                st.write(f"Total de faixas na playlist: {len(df)}")
+                st.dataframe(df)  # Exibe o DataFrame com as faixas
 
-            # Artistas com mais músicas
-            artist_counts = get_artists_with_most_tracks(tracks)
-            artist_df = pd.DataFrame(artist_counts.items(), columns=['Artista', 'Músicas'])
-            artist_df = artist_df.sort_values(by='Músicas', ascending=False)
-            st.write("Artistas com mais músicas na playlist:")
-            st.dataframe(artist_df)
+                # Artistas com mais músicas
+                artist_counts = get_artists_with_most_tracks(tracks)
+                artist_df = pd.DataFrame(artist_counts.items(), columns=['Artista', 'Músicas'])
+                artist_df = artist_df.sort_values(by='Músicas', ascending=False)
+                st.write("Artistas com mais músicas na playlist:")
+                st.dataframe(artist_df)
 
-            # Álbuns com mais músicas
-            album_df = get_albums_with_most_tracks(tracks)
-            st.write("Álbuns com mais músicas na playlist:")
-            st.dataframe(album_df)
-        else:
-            st.error("Erro ao carregar as faixas da playlist")
+                # Álbuns com mais músicas
+                album_df = get_albums_with_most_tracks(tracks)
+                st.write("Álbuns com mais músicas na playlist:")
+                st.dataframe(album_df)
+            else:
+                st.error("Erro ao carregar as faixas da playlist")
+        except TypeError:
+            st.error("Não é possível analisar essa playlist. Tente selecionar outra.")
+        except Exception as e:
+            st.error(f"Ocorreu um erro inesperado: {str(e)}")
     else:
         st.error("Você não tem playlists.")
 
