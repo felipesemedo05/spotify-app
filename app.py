@@ -10,7 +10,7 @@ st.set_page_config(page_title="🎵 Analisador de Spotify", layout="wide")
 # Configurações do Spotify API
 CLIENT_ID = st.secrets['SPOTIFY_CLIENT_ID']
 CLIENT_SECRET = st.secrets['SPOTIFY_CLIENT_SECRET']
-REDIRECT_URI = "http://localhost:8501" # Altere para o URL de callback correto
+REDIRECT_URI = st.secrets['SPOTIFY_REDIRECT_URI'] # Altere para o URL de callback correto
 SCOPE = "playlist-read-private user-top-read"
 
 # Criar autenticação do Spotify
