@@ -58,3 +58,4 @@ if redirect_url:
     for idx, item in enumerate(saved_tracks['items']):
         track = item['track']
         st.write(f"{idx + 1}. {track['name']} - {track['artists'][0]['name']}")
+
