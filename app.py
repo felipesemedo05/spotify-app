@@ -35,12 +35,11 @@ if st.button("Iniciar Sessão"):
         client_secret=user_data["CLIENT_SECRET"],
         redirect_uri=user_data["REDIRECT_URI"],
         scope=SCOPE,
-        open_browser=False
     )
     auth_url = auth_manager.get_authorize_url()
-    webbrowser.open(auth_url)
-    st.write("Por favor, autentique-se no Spotify na página aberta e copie o URL de redirecionamento aqui:")
-    redirect_url = st.text_input("Cole o URL de redirecionamento após autenticação:")
+    st.write("[Clique aqui para autenticar no Spotify](%s)" % auth_url)
+    
+    redirect_url = st.text_input("Após autenticar, cole o URL de redirecionamento aqui:")
     
     if redirect_url:
         code = auth_manager.parse_response_code(redirect_url)
