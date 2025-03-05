@@ -80,40 +80,7 @@ if "access_token" not in st.session_state:
 else:
     access_token = st.session_state["access_token"]
     user_info = get_user_info(access_token)
-    st.write("Usuário autenticado:", user_info)
-    
-    # Buscar e exibir playlists do usuário
-    playlists_data = get_user_playlists(access_token)
-    playlists = {p["name"]: p["id"] for p in playlists_data.get("items", [])}
-    
-    if playlists:
-        selected_playlist = st.selectbox("Selecione uma playlist:", list(playlists.keys()))
-        
-        if selected_playlist:
-            playlist_id = playlists[selected_playlist]
-            tracks_data = get_playlist_tracks(access_token, playlist_id)
-            
-            # Contagem de músicas por artista
-            artist_count = {}
-            for item in tracks_data.get("items", []):
-                track = item.get("track", {})
-                for artist in track.get("artists", []):
-                    artist_name = artist["name"]
-                    artist_count[artist_name] = artist_count.get(artist_name, 0) + 1
-            
-            # Exibir análise
-            df = pd.DataFrame(artist_count.items(), columns=["Artista", "Total de Músicas"])
-            df = df.sort_values(by="Total de Músicas", ascending=False)
-            st.write("Análise de músicas por artista na playlist:")
-            st.dataframe(df)
-
-# Exibir botão de login caso não esteja autenticado
-if "access_token" not in st.session_state:
-    st.markdown(f"[Clique aqui para fazer login no Spotify]({get_auth_url()})")
-else:
-    access_token = st.session_state["access_token"]
-    user_info = get_user_info(access_token)
-    st.write("Usuário autenticado:", user_info)
+    st.write(f"Usuário autenticado como {user_info['display_name']}")
 
         # Buscar e exibir playlists do usuário
     playlists_data = get_user_playlists(access_token)
