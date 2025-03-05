@@ -17,12 +17,12 @@ TOKEN_URL = "https://accounts.spotify.com/api/token"
 
 CLIENTS = {
     "duduguima": {
-        "client_id": st.secrets['client_id_duduguima'],
-        "client_secret": st.secrets['client_secret_duduguima']
+        "client_id": "e875ed6d6c774284be23d0d891625989",
+        "client_secret": "d51d83756a6e407f893289e233763158"
     },
     "smokyarts": {
-        "client_id": st.secrets['client_id_smokyarts'],
-        "client_secret": st.secrets['client_secret_smokyarts']
+        "client_id": "c3c44b8fc55743548e06cbcf9091a144",
+        "client_secret": "686d326c88e74648b70b60fcd55bb86c"
     }
 }
 
@@ -205,33 +205,42 @@ def get_top_tracks_6_months(access_token):
 
 
 # Função para pegar o histórico das últimas músicas ouvidas
-def get_recently_played_tracks(access_token, limit=50):
-    url = f"https://api.spotify.com/v1/me/player/recently-played?limit={limit}"
-    headers = {
-        "Authorization": f"Bearer {access_token}"
-    }
-    results = requests.get(url, headers=headers).json()
+# Função para obter o histórico de reprodução do usuário
+def get_recently_played(access_token):
+    url = "https://api.spotify.com/v1/me/player/recently-played?limit=50"
+    headers = {"Authorization": f"Bearer {access_token}"}
 
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 401:  # Token expirado
+        st.error("❌ Token expirado! Tente reiniciar o token manualmente.")
+        return pd.DataFrame()
+    
+    data = response.json()
+
+    if "items" not in data:
+        st.warning("❌ Não foi possível obter o histórico de reprodução.")
+        return pd.DataFrame()
+
+    # Extrai as informações relevantes
     tracks_data = []
+    for item in data["items"]:
+        track = item["track"]
+        played_at = item["played_at"]  # Quando a música foi tocada
+        track_name = track["name"]
+        artist_name = track["artists"][0]["name"]
+        album_name = track["album"]["name"]
+        popularity = track["popularity"]
+
+        tracks_data.append([played_at, track_name, artist_name, album_name, popularity])
+
+    # Converte para DataFrame
+    df_history = pd.DataFrame(tracks_data, columns=["Tocada Em", "Música", "Artista", "Álbum", "Popularidade"])
     
-    # Verificar se a chave 'items' está presente nos resultados
-    if 'items' in results:
-        for item in results["items"]:
-            track = item["track"]
-            # Verifica se 'played_at' está presente
-            played_at = item.get("played_at", "Data não disponível")
-            
-            tracks_data.append([
-                track["name"], 
-                track["artists"][0]["name"], 
-                track["album"]["name"], 
-                track["album"]["artists"][0]["name"], 
-                played_at
-            ])
-    else:
-        st.error("Erro ao acessar o histórico de músicas. Tente novamente mais tarde.")
-    
-    return pd.DataFrame(tracks_data, columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Data de Reprodução"])
+    # Converte a coluna de data para um formato legível
+    df_history["Tocada Em"] = pd.to_datetime(df_history["Tocada Em"]).dt.strftime("%d/%m/%Y %H:%M:%S")
+
+    return df_history
 
 def get_artists_with_most_tracks(tracks):
     artists = [track['track']['artists'][0]['name'] for track in tracks if track['track']['artists']]
@@ -403,32 +412,30 @@ elif option == "🔄 Mais ouvidas dos últimos 6 meses":
 
 # Aba para Histórico das Últimas Músicas Ouvidas
 elif option == "📱 Histórico de músicas ouvidas":
-    st.header("Histórico das Últimas Músicas Ouvidas")
-    
-    # Obtemos os dados do histórico de músicas
-    df_recent_tracks = get_recently_played_tracks(access_token)
+    st.header("📜 Histórico de Reprodução")
 
-    if df_recent_tracks.empty:
-        st.warning("❌ Nenhuma música encontrada no seu histórico recente!")
+    access_token = st.session_state.get("access_token")
+
+    if not access_token:
+        st.error("❌ Token de acesso não encontrado. Tente reiniciar o token.")
     else:
-        # Exibe o DataFrame com as músicas recentes
-        st.dataframe(df_recent_tracks)
+        df_history = get_recently_played(access_token)
 
-        # Cria o gráfico de barras para popularidade das músicas ouvidas
-        fig_recent_tracks = px.bar(df_recent_tracks, 
-                                   x="Música", 
-                                   title="Últimas Músicas Ouvidas", 
-                                   text_auto=True)
+        if df_history.empty:
+            st.warning("❌ Nenhuma reprodução encontrada recentemente!")
+        else:
+            # Exibe a tabela do histórico
+            st.dataframe(df_history)
 
-        # Adiciona a rotação de 45 graus no eixo X para melhorar a leitura
-        fig_recent_tracks.update_layout(
-            xaxis=dict(
-                tickangle=45  # Rotação de 45 graus nos rótulos do eixo X
-            )
-        )
+            # Cria um gráfico de barras com os artistas mais tocados
+            artist_counts = df_history["Artista"].value_counts().reset_index()
+            artist_counts.columns = ["Artista", "Quantidade"]
 
-        # Exibe o gráfico
-        st.plotly_chart(fig_recent_tracks)
+            fig_history = px.bar(artist_counts, x="Artista", y="Quantidade",
+                                 title="Artistas mais tocados recentemente",
+                                 text_auto=True, color="Quantidade")
+
+            st.plotly_chart(fig_history)
 
 # Nova aba no Streamlit
 elif option == "🎵 Gêneros mais ouvidos":
@@ -442,12 +449,5 @@ elif option == "🎵 Gêneros mais ouvidos":
     else:
         # Exibe a tabela dos gêneros mais ouvidos
         st.dataframe(df_genres)
-
-        # Cria um gráfico de pizza para visualização
-        fig_genres = px.pie(df_genres, names="Gênero", values="Frequência",
-                            title="Distribuição dos Gêneros Mais Ouvidos")
-
-        # Exibe o gráfico
-        st.plotly_chart(fig_genres)
 
 
