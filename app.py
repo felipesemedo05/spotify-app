@@ -2,19 +2,42 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import streamlit as st
 import os
+import urllib.parse
 
+
+# Configurações do seu app no Spotify
 CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
 CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
 REDIRECT_URI = st.secrets["SPOTIFY_REDIRECT_URI"]
+  # Ajuste conforme seu domínio público
+SCOPE = "user-read-private user-read-email"  # Defina os escopos necessários
 
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
-    client_id=CLIENT_ID,
-    client_secret=CLIENT_SECRET,
-    redirect_uri=REDIRECT_URI,
-    scope="user-top-read playlist-read-private"
-))
+# Criar a URL de autorização do Spotify
+AUTH_URL = "https://accounts.spotify.com/authorize"
+PARAMS = {
+    "client_id": CLIENT_ID,
+    "response_type": "code",
+    "redirect_uri": REDIRECT_URI,
+    "scope": SCOPE
+}
+auth_url = f"{AUTH_URL}?{urllib.parse.urlencode(PARAMS)}"
 
-st.write(sp.me()) # Deve retornar os detalhes do usuário autenticado
+st.title("Autenticação com Spotify")
+st.write("Clique abaixo para fazer login:")
+st.markdown(f"[Fazer login no Spotify]({auth_url})")
+
+# CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
+# CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
+# REDIRECT_URI = st.secrets["SPOTIFY_REDIRECT_URI"]
+
+# sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
+#     client_id=CLIENT_ID,
+#     client_secret=CLIENT_SECRET,
+#     redirect_uri=REDIRECT_URI,
+#     scope="user-top-read playlist-read-private"
+# ))
+
+# st.write(sp.me()) # Deve retornar os detalhes do usuário autenticado
 
 # import streamlit as st
 # import pandas as pd
