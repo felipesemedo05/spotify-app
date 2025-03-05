@@ -19,7 +19,7 @@ auth_manager = SpotifyOAuth(client_id=CLIENT_ID,
                              scope=SCOPE,
                              show_dialog=True)  # Isso força o usuário a sempre fazer login
 
-# Função para autenticação e pegar o token
+# Função para autenticar e obter o token
 def authenticate():
     token_info = auth_manager.get_access_token(st.query_params.get('code', [None])[0])
     if token_info:
@@ -28,19 +28,19 @@ def authenticate():
     else:
         return None
 
-# Função para verificar se o usuário já está autenticado
+# Função para verificar a autenticação
 def check_authentication():
-    # Verificar se já existe um token específico da sessão
+    # Verificar se já existe um token específico para a sessão
     if 'token_info' not in st.session_state:
         st.session_state.token_info = None
         st.session_state.sp = None
     
-    # Caso o token não exista, redireciona para a autenticação
+    # Caso o token não exista, solicita a autenticação
     if st.session_state.token_info is None:
         auth_code = st.query_params.get('code', [None])[0]
-
+        
         if auth_code:
-            # Se tiver o código de autenticação, tenta autenticar e salvar o token na sessão
+            # Se existir código de autenticação, tenta obter o token
             token_info = auth_manager.get_access_token(auth_code)
             if token_info:
                 st.session_state.token_info = token_info
@@ -51,15 +51,14 @@ def check_authentication():
                 st.warning("❌ Não foi possível autenticar.")
                 return None
         else:
-            # Se não tem código de autenticação, apresenta o link para o login
+            # Se não houver código de autenticação, apresenta o link para o login
             auth_url = auth_manager.get_authorize_url()
             st.markdown(f"[Clique aqui para autenticar com o Spotify]({auth_url})")
             return None
     else:
-        # Se já tiver token, retorna a instância do Spotify
+        # Se já tiver token, continua o fluxo normalmente
         st.session_state.sp = spotipy.Spotify(auth=st.session_state.token_info['access_token'])
         return st.session_state.sp
-
 
 # Função para buscar playlists do usuário
 def get_user_playlists(sp):
@@ -83,7 +82,7 @@ def get_playlist_tracks(sp, playlist_id):
     
     return pd.DataFrame(tracks_data, columns=["Música", "Artista", "Álbum", "Artista do Álbum"])
 
-# Função para buscar as músicas mais ouvidas das últimas 4 semanas (agora com até 400 músicas)
+# Função para buscar as músicas mais ouvidas das últimas 4 semanas
 def get_top_tracks(sp):
     tracks_data = []
     results = sp.current_user_top_tracks(limit=50, time_range="short_term")  # Últimas 4 semanas
