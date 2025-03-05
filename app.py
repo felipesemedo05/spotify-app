@@ -69,9 +69,18 @@ def get_all_playlist_tracks(access_token, playlist_id):
 # Função para buscar top artistas (últimas 4 semanas)
 def get_top_tracks(access_token):
     headers = {"Authorization": f"Bearer {access_token}"}
-    response = requests.get(SPOTIFY_API_TOP_TRACKS, headers=headers)
-    return response.json()
-
+    tracks = []
+    url = SPOTIFY_API_TOP_TRACKS + "?time_range=short_term"
+    
+    # Vamos buscar as 300 músicas mais ouvidas (6 páginas de 50 músicas cada)
+    for offset in range(0, 300, 50):  # Offset de 0 a 250 (50 por vez)
+        params = {"limit": 50, "offset": offset}
+        response = requests.get(url, headers=headers, params=params).json()
+        
+        if "items" in response:
+            tracks.extend(response["items"])
+    
+    return tracks
 # Interface Streamlit
 st.title("Login com Spotify")
 
@@ -145,23 +154,28 @@ else:
                 st.write("Top 5 Álbuns na playlist:")
                 st.dataframe(album_df)
 
+            # Função para exibir as 300 músicas mais ouvidas das últimas 4 semanas
             elif tab == "Minhas Músicas Mais Ouvidas (últimas 4 semanas)":
-
-                df_top_tracks = get_top_tracks(access_token)
-                # Exibir top 5 músicas das últimas 4 semanas
-                if df_top_tracks.empty:
+                top_tracks_data = get_top_tracks(access_token)
+                
+                if not top_tracks_data:
                     st.warning("❌ Nenhuma música encontrada no seu histórico!")
                 else:
+                    # Criar DataFrame para exibição
+                    track_list = [{"Música": track["name"], "Artista": ", ".join([artist["name"] for artist in track["artists"]]), "Popularidade": track["popularity"]} for track in top_tracks_data]
+                    df_top_tracks = pd.DataFrame(track_list)
+                    
+                    # Exibir DataFrame
                     st.dataframe(df_top_tracks)
-
-                    fig_top_tracks = px.bar(df_top_tracks, x="Música", y="Popularidade",
-                                            title="Top 10 Músicas Mais Ouvidas (4 Semanas)", text_auto=True, color="Popularidade",)
-
-                    # Adiciona a rotação de 45 graus no eixo X
+                    
+                    # Gráfico de popularidade das músicas
+                    fig_top_tracks = px.bar(df_top_tracks, x="Música", y="Popularidade", title="Top 300 Músicas Mais Ouvidas (Últimas 4 Semanas)", text_auto=True, color="Popularidade")
+                    
+                    # Adiciona rotação de 45 graus no eixo X
                     fig_top_tracks.update_layout(
                         xaxis=dict(
-                            tickangle=45  # Rotação de 45 graus nos rótulos do eixo X
+                            tickangle=45
                         )
                     )
-
+                    
                     st.plotly_chart(fig_top_tracks)
