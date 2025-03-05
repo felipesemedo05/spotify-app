@@ -455,4 +455,10 @@ elif option == "🎵 Gêneros mais ouvidos":
         # Exibe a tabela dos gêneros mais ouvidos
         st.dataframe(df_genres)
 
+        fig_history = px.bar(df_genres, x="Gênero", y="Frequência",
+                        title="Frequência de gêneros",
+                        text_auto=True, color="Quantidade")
+
+        st.plotly_chart(fig_history)
+
 
