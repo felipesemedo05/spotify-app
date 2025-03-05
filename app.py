@@ -1,5 +1,6 @@
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+import streamlit as st
 
 # Configurações do Spotify API
 CLIENT_ID = "c3c44b8fc55743548e06cbcf9091a144"
@@ -12,7 +13,7 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id="SEU_CLIENT_ID",
                                                redirect_uri="SEU_REDIRECT_URI",
                                                scope="user-top-read"))
 
-print(sp.me())  # Deve retornar os detalhes do usuário autenticado
+st.write(sp.me()) # Deve retornar os detalhes do usuário autenticado
 
 # import streamlit as st
 # import pandas as pd
