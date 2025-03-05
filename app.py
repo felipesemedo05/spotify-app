@@ -76,21 +76,26 @@ def get_all_playlist_tracks(access_token, playlist_id):
     
     return tracks
 
-# Função para buscar top artistas (últimas 4 semanas)
-def get_top_tracks(access_token):
-    headers = {"Authorization": f"Bearer {access_token}"}
-    tracks = []
-    url = SPOTIFY_API_TOP_TRACKS + "?time_range=short_term"
+def get_top_tracks():
+    tracks_data = []
+    results = sp.current_user_top_tracks(limit=50, time_range="short_term")  # Últimas 4 semanas
     
-    # Vamos buscar as 300 músicas mais ouvidas (6 páginas de 50 músicas cada)
-    for offset in range(0, 300, 50):  # Offset de 0 a 250 (50 por vez)
-        params = {"limit": 50, "offset": offset}
-        response = requests.get(url, headers=headers, params=params).json()
+    while results:
+        # Adiciona as músicas retornadas pela API
+        tracks_data.extend([[track["name"], track["artists"][0]["name"], track["album"]["name"], 
+                             track["album"]["artists"][0]["name"], track["popularity"]]
+                            for track in results["items"]])
         
-        if "items" in response:
-            tracks.extend(response["items"])
+        # Verifica se há mais músicas para pegar
+        if len(tracks_data) >= 500:
+            break
+        
+        # Se houver mais músicas, continua a busca com a próxima página
+        results = sp.next(results) if results["next"] else None
     
-    return tracks
+    # Limita a 500 músicas, caso a contagem ultrapasse
+    return pd.DataFrame(tracks_data[:500], columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Popularidade"])
+
 # Interface Streamlit
 st.title("Login com Spotify")
 
@@ -166,26 +171,21 @@ else:
 
             # Função para exibir as 300 músicas mais ouvidas das últimas 4 semanas
             elif tab == "Minhas Músicas Mais Ouvidas (últimas 4 semanas)":
-                top_tracks_data = get_top_tracks(access_token)
-                
-                if not top_tracks_data:
+                df_top_tracks = get_top_tracks()
+
+                if df_top_tracks.empty:
                     st.warning("❌ Nenhuma música encontrada no seu histórico!")
                 else:
-                    # Criar DataFrame para exibição
-                    track_list = [{"Música": track["name"], "Artista": ", ".join([artist["name"] for artist in track["artists"]]), "Popularidade": track["popularity"]} for track in top_tracks_data]
-                    df_top_tracks = pd.DataFrame(track_list)
-                    
-                    # Exibir DataFrame
                     st.dataframe(df_top_tracks)
-                    
-                    # Gráfico de popularidade das músicas
-                    fig_top_tracks = px.bar(df_top_tracks, x="Música", y="Popularidade", title="Top 300 Músicas Mais Ouvidas (Últimas 4 Semanas)", text_auto=True, color="Popularidade")
-                    
-                    # Adiciona rotação de 45 graus no eixo X
+
+                    fig_top_tracks = px.bar(df_top_tracks, x="Música", y="Popularidade",
+                                            title="Top 10 Músicas Mais Ouvidas (4 Semanas)", text_auto=True, color="Popularidade",)
+
+                    # Adiciona a rotação de 45 graus no eixo X
                     fig_top_tracks.update_layout(
                         xaxis=dict(
-                            tickangle=45
+                            tickangle=45  # Rotação de 45 graus nos rótulos do eixo X
                         )
                     )
-                    
+
                     st.plotly_chart(fig_top_tracks)
