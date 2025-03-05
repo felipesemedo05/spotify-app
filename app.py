@@ -12,20 +12,20 @@ CLIENT_SECRET = "686d326c88e74648b70b60fcd55bb86c"
 REDIRECT_URI = "http://localhost:8888/callback"
 SCOPE = "playlist-read-private user-top-read"
 
-# Criar autenticação do Spotify
-auth_manager = SpotifyOAuth(client_id=CLIENT_ID,
-                            client_secret=CLIENT_SECRET,
-                            redirect_uri=REDIRECT_URI,
-                            scope=SCOPE,
-                            show_dialog=True)  # Isso força o usuário a sempre fazer login
+# # Criar autenticação do Spotify
+# auth_manager = SpotifyOAuth(client_id=CLIENT_ID,
+#                             client_secret=CLIENT_SECRET,
+#                             redirect_uri=REDIRECT_URI,
+#                             scope=SCOPE,
+#                             show_dialog=True)  # Isso força o usuário a sempre fazer login
 
-sp = spotipy.Spotify(auth_manager=auth_manager)
+# sp = spotipy.Spotify(auth_manager=auth_manager)
 
-# # Autenticação
-# sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=CLIENT_ID,
-#                                                client_secret=CLIENT_SECRET,
-#                                                redirect_uri=REDIRECT_URI,
-#                                                scope=SCOPE))
+# Autenticação
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=CLIENT_ID,
+                                               client_secret=CLIENT_SECRET,
+                                               redirect_uri=REDIRECT_URI,
+                                               scope=SCOPE))
 
 # Função para buscar playlists do usuário
 def get_user_playlists():
