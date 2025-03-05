@@ -115,8 +115,6 @@ else:
             
             # Exibir todas as músicas
             df_tracks = pd.DataFrame(track_list)
-            st.write("Músicas na Playlist:")
-            st.dataframe(df_tracks)
             
             # Exibir análise
             df_artists = pd.DataFrame(artist_count.items(), columns=["Artista", "Total de Músicas"])
