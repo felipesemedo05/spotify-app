@@ -2,6 +2,7 @@ import streamlit as st
 import time
 import requests
 import json
+from collections import Counter
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 
@@ -68,18 +69,76 @@ def get_user_info(access_token):
     else:
         return None
 
-# Streamlit Interface
-st.title("Spotify Authentication")
-st.write("Escolha um usuário para ver suas informações:")
+def get_user_playlists(access_token):
+    url = "https://api.spotify.com/v1/me/playlists"
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json()['items']
+    else:
+        return []
 
+def get_playlist_tracks(access_token, playlist_id):
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json()['items']
+    else:
+        return []
+
+# Streamlit Interface
+st.title("Spotify Authentication and Playlists")
+
+# Menu de navegação
+st.sidebar.title("Navegação")
+option = st.sidebar.radio("Escolha uma opção", ("Informações do Usuário", "Playlists"))
+
+# Usuário selecionado
 user = st.selectbox("Usuário", ["duduguima", "smokyarts"])
 
+# Obtendo o token válido
 access_token = get_valid_token(user)
-user_info = get_user_info(access_token)
 
-if user_info:
-    st.write(f"Nome: {user_info['display_name']}")
-    st.write(f"Email: {user_info['email']}")
-    st.image(user_info['images'][0]['url'] if user_info['images'] else None)
-else:
-    st.error("Erro ao acessar as informações do usuário")
+if option == "Informações do Usuário":
+    st.header("Informações do Usuário")
+    user_info = get_user_info(access_token)
+
+    if user_info:
+        st.write(f"Nome: {user_info['display_name']}")
+        st.write(f"Email: {user_info['email']}")
+        st.image(user_info['images'][0]['url'] if user_info['images'] else None)
+    else:
+        st.error("Erro ao acessar as informações do usuário")
+
+elif option == "Playlists":
+    st.header("Suas Playlists")
+    playlists = get_user_playlists(access_token)
+
+    if playlists:
+        playlist_names = [playlist['name'] for playlist in playlists]
+        selected_playlist_name = st.selectbox("Escolha uma playlist", playlist_names)
+
+        selected_playlist = next(playlist for playlist in playlists if playlist['name'] == selected_playlist_name)
+        st.write(f"Você selecionou a playlist: {selected_playlist_name}")
+
+        # Obtendo as faixas da playlist
+        tracks = get_playlist_tracks(access_token, selected_playlist['id'])
+
+        if tracks:
+            # Contando os artistas com mais músicas
+            artists = [track['track']['artists'][0]['name'] for track in tracks if track['track']['artists']]
+            artist_counts = Counter(artists)
+            st.write("Artistas com mais músicas nesta playlist:")
+
+            # Mostrando os artistas mais frequentes
+            for artist, count in artist_counts.most_common():
+                st.write(f"{artist}: {count} música(s)")
+        else:
+            st.error("Erro ao carregar as faixas da playlist")
+    else:
+        st.error("Você não tem playlists.")
