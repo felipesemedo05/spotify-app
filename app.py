@@ -18,7 +18,7 @@ def show_user_info(spotify):
 st.title('Spotify User Information')
 
 # Usuário a ser escolhido (não mais usando selectbox)
-user_selection = st.selectbox("Selecione o usuário", ["duduguima", "smokyarts"])
+user_selection = st.text_input("Digite o nome do usuário (duduguima ou smokyarts)").lower()
 
 if user_selection:  # Verifica se o nome do usuário foi informado
     # Construir as chaves dinamicamente com base no nome do usuário
