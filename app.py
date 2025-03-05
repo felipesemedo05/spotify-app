@@ -16,8 +16,17 @@ selected_user = st.selectbox('Escolha o cliente para autenticar:',
 # Configurações do Spotify API
 
 id_key = f"client_id_{selected_user}"
-st.write(id_key)
-#CLIENT_ID = st.secrets[]
-# CLIENT_SECRET 
-# REDIRECT_URI = "http://localhost:8888/callback"
-# SCOPE = "playlist-read-private user-top-read"
+id_secret = f"client_secret_{selected_user}"
+
+CLIENT_ID = st.secrets[id_key]
+CLIENT_SECRET = st.secrets[id_secret]
+REDIRECT_URI = "https://spotify-app-qtnrmxu4qmnesgsgoyvvxg.streamlit.app/callback"
+SCOPE = "playlist-read-private user-top-read"
+
+# Criar autenticação do Spotify
+auth_manager = SpotifyOAuth(client_id=CLIENT_ID,
+                            client_secret=CLIENT_SECRET,
+                            redirect_uri=REDIRECT_URI,
+                            scope=SCOPE)
+
+sp = spotipy.Spotify(auth_manager=auth_manager)
