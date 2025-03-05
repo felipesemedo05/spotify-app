@@ -238,6 +238,25 @@ def get_artists_with_most_tracks(tracks):
     artist_counts = Counter(artists)
     return artist_counts
 
+# Função para obter os gêneros dos artistas mais ouvidos
+def get_top_genres(access_token):
+    url = "https://api.spotify.com/v1/me/top/artists?limit=50&time_range=medium_term"  # Últimos 6 meses
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.get(url, headers=headers).json()
+
+    genre_counts = {}
+
+    if "items" in response:
+        for artist in response["items"]:
+            for genre in artist["genres"]:
+                genre_counts[genre] = genre_counts.get(genre, 0) + 1
+
+    # Transforma em DataFrame
+    df_genres = pd.DataFrame(genre_counts.items(), columns=["Gênero", "Frequência"])
+    df_genres = df_genres.sort_values(by="Frequência", ascending=False)
+
+    return df_genres
+
 def plot_popularity(tracks):
     popularities = [track['track']['popularity'] for track in tracks]
     track_names = [track['track']['name'] for track in tracks]
@@ -261,7 +280,8 @@ option = st.sidebar.radio("Escolha uma opção", ("📋 Informações do Usuári
                                                 "🎧 Playlists", 
                                                 "🔥 Mais ouvidas das últimas 4 semanas", 
                                                 "🔄 Mais ouvidas dos últimos 6 meses",
-                                                "📱 Histórico de músicas ouvidas"))
+                                                "📱 Histórico de músicas ouvidas",
+                                                "🎵 Gêneros mais ouvidos"))
 
 # Usuário selecionado
 user = st.selectbox("Usuário", ["duduguima", 
@@ -273,7 +293,7 @@ if st.button("🔄 Reiniciar Token"):
     if new_access_token:
         st.session_state["access_token"] = new_access_token
         st.rerun()  # Atualiza a página
-        
+
 # Obtendo o token válido
 access_token = get_valid_token(user)
 
@@ -409,4 +429,25 @@ elif option == "📱 Histórico de músicas ouvidas":
 
         # Exibe o gráfico
         st.plotly_chart(fig_recent_tracks)
+
+# Nova aba no Streamlit
+elif option == "🎵 Gêneros mais ouvidos":
+    st.header("🎵 Meus Gêneros Mais Ouvidos")
+
+    # Obtém os gêneros mais ouvidos
+    df_genres = get_top_genres(st.session_state.get("access_token"))
+
+    if df_genres.empty:
+        st.warning("❌ Nenhum gênero encontrado nos últimos 6 meses!")
+    else:
+        # Exibe a tabela dos gêneros mais ouvidos
+        st.dataframe(df_genres)
+
+        # Cria um gráfico de pizza para visualização
+        fig_genres = px.pie(df_genres, names="Gênero", values="Frequência",
+                            title="Distribuição dos Gêneros Mais Ouvidos")
+
+        # Exibe o gráfico
+        st.plotly_chart(fig_genres)
+
 
