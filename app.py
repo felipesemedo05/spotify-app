@@ -4,6 +4,7 @@ import streamlit as st
 import os
 import urllib.parse
 import pandas as pd
+import requests
 
 # Configurações do seu app no Spotify
 CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
