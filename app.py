@@ -194,7 +194,7 @@ st.title("Spotify Authentication and Playlists")
 
 # Menu de navegação
 st.sidebar.title("Navegação")
-option = st.sidebar.radio("Escolha uma opção", ("Informações do Usuário", "Playlists", "Top Músicas"))
+option = st.sidebar.radio("Escolha uma opção", ("📋 Informações do Usuário", "🎧 Playlists", "🔥 Músicas mais ouvidas das últimas 4 semanas"))
 
 # Usuário selecionado
 user = st.selectbox("Usuário", ["duduguima", "smokyarts"])
