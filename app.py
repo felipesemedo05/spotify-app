@@ -3,14 +3,13 @@ import pandas as pd
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import plotly.express as px
-import os
 
 st.set_page_config(page_title="🎵 Analisador de Spotify", layout="wide")
 
 # Configurações do Spotify API
 CLIENT_ID = st.secrets['SPOTIFY_CLIENT_ID']
 CLIENT_SECRET = st.secrets['SPOTIFY_CLIENT_SECRET']
-REDIRECT_URI = st.secrets['SPOTIFY_REDIRECT_URI'] # Altere para o URL de callback correto
+REDIRECT_URI = st.secrets['SPOTIFY_REDIRECT_URI']  # Altere para o URL de callback correto
 SCOPE = "playlist-read-private user-top-read"
 
 # Criar autenticação do Spotify
@@ -34,10 +33,11 @@ def check_authentication():
     if 'token_info' not in st.session_state:
         st.session_state.token_info = None
         st.session_state.sp = None
-    
+
+    # Se o token não estiver presente, tenta autenticar
     if st.session_state.token_info is None:
         auth_code = st.query_params.get('code', [None])[0]
-        
+
         if auth_code:
             # Se houver código de autenticação, tenta autenticar e salvar o token
             token_info = auth_manager.get_access_token(auth_code)
@@ -48,11 +48,12 @@ def check_authentication():
             else:
                 st.warning("❌ Não foi possível autenticar.")
         else:
-            # Se o token não estiver presente, redireciona para a autenticação
+            # Se não houver token, redireciona para a autenticação
             auth_url = auth_manager.get_authorize_url()
             st.markdown(f"[Clique aqui para autenticar com o Spotify]({auth_url})")
             return None
     else:
+        # Se já tiver o token, cria o objeto do Spotify
         st.session_state.sp = spotipy.Spotify(auth=st.session_state.token_info['access_token'])
         return st.session_state.sp
 
