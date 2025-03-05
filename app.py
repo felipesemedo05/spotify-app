@@ -264,7 +264,15 @@ option = st.sidebar.radio("Escolha uma opção", ("📋 Informações do Usuári
                                                 "📱 Histórico de músicas ouvidas"))
 
 # Usuário selecionado
-user = st.selectbox("Usuário", ["duduguima", "smokyarts"])
+user = st.selectbox("Usuário", ["duduguima", 
+                                "smokyarts"])
+
+# Botão para reiniciar o token
+if st.button("🔄 Reiniciar Token"):
+    new_access_token = refresh_access_token(user)
+    if new_access_token:
+        st.session_state["access_token"] = new_access_token
+        st.experimental_rerun()  # Recarrega a página para aplicar o novo token
 
 # Obtendo o token válido
 access_token = get_valid_token(user)
