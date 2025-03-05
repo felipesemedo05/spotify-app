@@ -8,10 +8,10 @@ CLIENT_SECRET = "686d326c88e74648b70b60fcd55bb86c"
 REDIRECT_URI = "http://localhost:8888/callback"
 SCOPE = "playlist-read-private user-top-read"
 
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id="SEU_CLIENT_ID",
-                                               client_secret="SEU_CLIENT_SECRET",
-                                               redirect_uri="SEU_REDIRECT_URI",
-                                               scope="user-top-read"))
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=CLIENT_ID,
+                                               client_secret=CLIENT_SECRET,
+                                               redirect_uri=REDIRECT_URI,
+                                               scope=SCOPE))
 
 st.write(sp.me()) # Deve retornar os detalhes do usuário autenticado
 
