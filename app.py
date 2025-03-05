@@ -204,6 +204,27 @@ def get_top_tracks_6_months(access_token):
     return pd.DataFrame(tracks_data[:100], columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Popularidade"])
 
 
+# Função para pegar o histórico das últimas músicas ouvidas
+def get_recently_played_tracks(access_token, limit=50):
+    url = f"https://api.spotify.com/v1/me/player/recently-played?limit={limit}"
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    results = requests.get(url, headers=headers).json()
+
+    tracks_data = []
+    for item in results["items"]:
+        track = item["track"]
+        tracks_data.append([
+            track["name"], 
+            track["artists"][0]["name"], 
+            track["album"]["name"], 
+            track["album"]["artists"][0]["name"], 
+            track["played_at"]
+        ])
+
+    return pd.DataFrame(tracks_data, columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Data de Reprodução"])
+
 def get_artists_with_most_tracks(tracks):
     artists = [track['track']['artists'][0]['name'] for track in tracks if track['track']['artists']]
     artist_counts = Counter(artists)
@@ -231,7 +252,8 @@ st.sidebar.title("Navegação")
 option = st.sidebar.radio("Escolha uma opção", ("📋 Informações do Usuário", 
                                                 "🎧 Playlists", 
                                                 "🔥 Mais ouvidas das últimas 4 semanas", 
-                                                "🔄 Mais ouvidas dos últimos 6 meses"))
+                                                "🔄 Mais ouvidas dos últimos 6 meses",
+                                                "📱 Histórico de músicas ouvidas"))
 
 # Usuário selecionado
 user = st.selectbox("Usuário", ["duduguima", "smokyarts"])
@@ -301,7 +323,7 @@ elif option == "🔥 Mais ouvidas das últimas 4 semanas":
         st.dataframe(top_tracks_df)
 
         fig_top_tracks = px.bar(top_tracks_df, x="Música", y="Popularidade",
-                                title="Top 10 Músicas Mais Ouvidas (4 Semanas)", text_auto=True, color="Popularidade",)
+                                title="Top 100 Músicas Mais Ouvidas (4 Semanas)", text_auto=True, color="Popularidade",)
 
         # Adiciona a rotação de 45 graus no eixo X
         fig_top_tracks.update_layout(
@@ -329,7 +351,7 @@ elif option == "🔄 Mais ouvidas dos últimos 6 meses":
         fig_top_tracks_6m = px.bar(df_top_tracks_6m, 
                                    x="Música", 
                                    y="Popularidade",
-                                   title="Top 50 Músicas Mais Ouvidas nos Últimos 6 Meses", 
+                                   title="Top 100 Músicas Mais Ouvidas nos Últimos 6 Meses", 
                                    text_auto=True, 
                                    color="Popularidade")
         
@@ -342,5 +364,34 @@ elif option == "🔄 Mais ouvidas dos últimos 6 meses":
         
         # Exibe o gráfico
         st.plotly_chart(fig_top_tracks_6m)
+
+# Aba para Histórico das Últimas Músicas Ouvidas
+elif option == "📱 Histórico de músicas ouvidas":
+    st.header("Histórico das Últimas Músicas Ouvidas")
+    
+    # Obtemos os dados do histórico de músicas
+    df_recent_tracks = get_recently_played_tracks(access_token)
+
+    if df_recent_tracks.empty:
+        st.warning("❌ Nenhuma música encontrada no seu histórico recente!")
+    else:
+        # Exibe o DataFrame com as músicas recentes
+        st.dataframe(df_recent_tracks)
+
+        # Cria o gráfico de barras para popularidade das músicas ouvidas
+        fig_recent_tracks = px.bar(df_recent_tracks, 
+                                   x="Música", 
+                                   title="Últimas Músicas Ouvidas", 
+                                   text_auto=True)
+
+        # Adiciona a rotação de 45 graus no eixo X para melhorar a leitura
+        fig_recent_tracks.update_layout(
+            xaxis=dict(
+                tickangle=45  # Rotação de 45 graus nos rótulos do eixo X
+            )
+        )
+
+        # Exibe o gráfico
+        st.plotly_chart(fig_recent_tracks)
 
 
