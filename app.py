@@ -457,7 +457,7 @@ elif option == "🎵 Gêneros mais ouvidos":
 
         fig_history = px.bar(df_genres, x="Gênero", y="Frequência",
                         title="Frequência de gêneros",
-                        text_auto=True, color="Quantidade")
+                        text_auto=True, color="Frequência")
 
         st.plotly_chart(fig_history)
 
