@@ -25,7 +25,7 @@ if user_selection:  # Verifica se o nome do usuário foi informado
     client_id_key = f"client_id_{user_selection}"
     client_secret_key = f"client_secret_{user_selection}"
 
-    if client_id_key in st.secrets["spotify"] and client_secret_key in st.secrets["spotify"]:
+    if client_id_key in st.secrets and client_secret_key in st.secrets:
         # Obter as credenciais com base na seleção
         client_id = st.secrets[client_id_key]
         client_secret = st.secrets[client_secret_key]
