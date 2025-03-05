@@ -231,19 +231,19 @@ elif option == "🎧 Playlists":
             if tracks:
                 # DataFrame das faixas
                 df = get_tracks_dataframe(tracks)
-                st.write(f"Total de faixas na playlist: {len(df)}")
+                st.subheader(f"Total de faixas na playlist: {len(df)}")
                 st.dataframe(df)  # Exibe o DataFrame com as faixas
 
                 # Artistas com mais músicas
                 artist_counts = get_artists_with_most_tracks(tracks)
                 artist_df = pd.DataFrame(artist_counts.items(), columns=['Artista', 'Músicas'])
                 artist_df = artist_df.sort_values(by='Músicas', ascending=False)
-                st.write("Artistas com mais músicas na playlist:")
+                st.subheader("Artistas com mais músicas na playlist:")
                 st.dataframe(artist_df)
 
                 # Álbuns com mais músicas
                 album_df = get_albums_with_most_tracks(tracks)
-                st.write("Álbuns com mais músicas na playlist:")
+                st.subheader("Álbuns com mais músicas na playlist:")
                 st.dataframe(album_df)
             else:
                 st.error("Erro ao carregar as faixas da playlist")
