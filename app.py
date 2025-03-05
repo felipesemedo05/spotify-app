@@ -48,7 +48,10 @@ def check_authentication():
             else:
                 st.warning("❌ Não foi possível autenticar.")
         else:
-            st.markdown("[Clique aqui para autenticar com o Spotify](%s)" % auth_manager.get_authorize_url())
+            # Se o token não estiver presente, redireciona para a autenticação
+            auth_url = auth_manager.get_authorize_url()
+            st.markdown(f"[Clique aqui para autenticar com o Spotify]({auth_url})")
+            return None
     else:
         st.session_state.sp = spotipy.Spotify(auth=st.session_state.token_info['access_token'])
         return st.session_state.sp
