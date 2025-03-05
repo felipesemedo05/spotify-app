@@ -3,9 +3,9 @@ from spotipy.oauth2 import SpotifyOAuth
 import streamlit as st
 import os
 
-CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
-CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
-REDIRECT_URI = st.secrets["SPOTIFY_REDIRECT_URI"]
+CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID "]
+CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET "]
+REDIRECT_URI = st.secrets["SPOTIFY_REDIRECT_URI "]
 
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
     client_id=CLIENT_ID,
