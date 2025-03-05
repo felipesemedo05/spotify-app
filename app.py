@@ -156,7 +156,7 @@ def get_top_tracks(access_token):
         ] for track in results["items"]])
 
         # Verifica se há mais músicas para pegar
-        if len(tracks_data) >= 500:
+        if len(tracks_data) >= 100:
             break
 
         # Se houver mais músicas, continua a busca com a próxima página
@@ -167,7 +167,41 @@ def get_top_tracks(access_token):
             break
 
     # Limita a 500 músicas, caso a contagem ultrapasse
-    return pd.DataFrame(tracks_data[:500], columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Popularidade"])
+    return pd.DataFrame(tracks_data[:100], columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Popularidade"])
+
+# Função para pegar as top tracks dos últimos 6 meses
+def get_top_tracks_6_months(access_token):
+    tracks_data = []
+    url = "https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=50"  # Últimos 6 meses
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    
+    results = requests.get(url, headers=headers).json()
+
+    while results:
+        # Adiciona as músicas retornadas pela API
+        tracks_data.extend([[
+            track["name"], 
+            track["artists"][0]["name"], 
+            track["album"]["name"], 
+            track["album"]["artists"][0]["name"], 
+            track["popularity"]
+        ] for track in results["items"]])
+
+        # Verifica se há mais músicas para pegar
+        if len(tracks_data) >= 100:
+            break
+
+        # Se houver mais músicas, continua a busca com a próxima página
+        url = results.get("next")
+        if url:
+            results = requests.get(url, headers=headers).json()
+        else:
+            break
+
+    # Limita a 400 músicas, caso a contagem ultrapasse
+    return pd.DataFrame(tracks_data[:100], columns=["Música", "Artista", "Álbum", "Artista do Álbum", "Popularidade"])
 
 
 def get_artists_with_most_tracks(tracks):
@@ -194,7 +228,10 @@ st.title("Spotify Authentication and Playlists")
 
 # Menu de navegação
 st.sidebar.title("Navegação")
-option = st.sidebar.radio("Escolha uma opção", ("📋 Informações do Usuário", "🎧 Playlists", "🔥 Músicas mais ouvidas das últimas 4 semanas"))
+option = st.sidebar.radio("Escolha uma opção", ("📋 Informações do Usuário", 
+                                                "🎧 Playlists", 
+                                                "🔥 Mais ouvidas das últimas 4 semanas", 
+                                                "🔄 Mais ouvidas dos últimos 6 meses"))
 
 # Usuário selecionado
 user = st.selectbox("Usuário", ["duduguima", "smokyarts"])
@@ -254,7 +291,7 @@ elif option == "🎧 Playlists":
     else:
         st.error("Você não tem playlists.")
 
-elif option == "🔥 Músicas mais ouvidas das últimas 4 semanas":
+elif option == "🔥 Mais ouvidas das últimas 4 semanas":
     top_tracks_df = get_top_tracks(access_token)
     #st.dataframe(top_tracks_df)  # Exibe o DataFrame no Streamlit
 
@@ -274,5 +311,36 @@ elif option == "🔥 Músicas mais ouvidas das últimas 4 semanas":
         )
 
         st.plotly_chart(fig_top_tracks)
+
+# Aba para as Top Tracks dos Últimos 6 Meses
+elif option == "🔄 Mais ouvidas dos últimos 6 meses":
+    st.header("Top Músicas dos Últimos 6 Meses")
+    
+    # Obtemos os dados das top tracks
+    df_top_tracks_6m = get_top_tracks_6_months(access_token)
+
+    if df_top_tracks_6m.empty:
+        st.warning("❌ Nenhuma música encontrada no seu histórico dos últimos 6 meses!")
+    else:
+        # Exibe o DataFrame com as músicas
+        st.dataframe(df_top_tracks_6m)
+
+        # Cria o gráfico de barras de popularidade das músicas
+        fig_top_tracks_6m = px.bar(df_top_tracks_6m, 
+                                   x="Música", 
+                                   y="Popularidade",
+                                   title="Top 50 Músicas Mais Ouvidas nos Últimos 6 Meses", 
+                                   text_auto=True, 
+                                   color="Popularidade")
+        
+        # Adiciona a rotação de 45 graus no eixo X para melhorar a leitura
+        fig_top_tracks_6m.update_layout(
+            xaxis=dict(
+                tickangle=45  # Rotação de 45 graus nos rótulos do eixo X
+            )
+        )
+        
+        # Exibe o gráfico
+        st.plotly_chart(fig_top_tracks_6m)
 
 
