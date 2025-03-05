@@ -8,6 +8,9 @@ import seaborn as sns
 import plotly.express as px
 from collections import Counter
 
+
+st.set_page_config(page_title="🎵 Analisador de Spotify", layout="wide")
+
 # Funções auxiliares para acessar e renovar tokens (como já discutido)
 TOKEN_FILE = "tokens.json"
 TOKEN_URL = "https://accounts.spotify.com/api/token"
@@ -216,8 +219,11 @@ elif option == "Playlists":
             artist_counts = get_artists_with_most_tracks(tracks)
             artist_df = pd.DataFrame(artist_counts.items(), columns=['Artista', 'Músicas'])
             artist_df = artist_df.sort_values(by='Músicas', ascending=False)
+            album_counts = df.groupby(["Álbum", "Artista do Álbum"]).size().reset_index(name="Quantidade")
             st.write("Artistas com mais músicas na playlist:")
             st.dataframe(artist_df)
+            st.write("Top Álbuns da Playlist")
+            st.dataframe(album_counts)
         else:
             st.error("Erro ao carregar as faixas da playlist")
     else:
