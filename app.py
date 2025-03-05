@@ -74,7 +74,7 @@ st.title("🎵 Analisador de Spotify - Playlists & Músicas Mais Ouvidas")
 st.write("Clique no botão abaixo para autenticar com sua conta Spotify:")
 
 # Passo 1: Verificar se o código de autenticação foi fornecido
-auth_code = st.experimental_get_query_params().get('code', [None])[0]
+auth_code = st.query_params().get('code', [None])[0]
 
 if auth_code:
     # Passo 2: Se já tiver código, tentar autenticar
