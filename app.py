@@ -236,8 +236,8 @@ def get_recently_played(access_token):
     df_history = pd.DataFrame(tracks_data, columns=["Tocada Em", "Música", "Artista", "Álbum", "Popularidade"])
     
     # Converte a coluna de data para um formato legível
-    df_history["Tocada Em"] = df_history["Tocada Em"].astype(str)
-    df_history["Tocada Em"] = pd.to_datetime(df_history["Tocada Em"]).dt.strftime("%d/%m/%Y %H:%M:%S")
+    df_history["Tocada Em"] = pd.to_datetime(df_history["Tocada Em"], errors="coerce")
+    df_history["Tocada Em"] = df_history["Tocada Em"].dt.strftime("%d/%m/%Y %H:%M:%S")
 
     return df_history
 
